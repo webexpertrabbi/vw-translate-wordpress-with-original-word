@@ -146,9 +146,10 @@ class VW_Translate_Admin {
 			'vw-translate-admin',
 			'vwTranslate',
 			array(
-				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
-				'nonce'     => wp_create_nonce( 'vw_translate_nonce' ),
-				'strings'   => array(
+				'ajaxUrl'              => admin_url( 'admin-ajax.php' ),
+				'nonce'                => wp_create_nonce( 'vw_translate_nonce' ),
+				'siteOriginalLanguage' => get_option( 'vw_translate_site_original_language', strtolower( substr( get_locale(), 0, 2 ) ) ),
+				'strings'              => array(
 					'scanning'      => __( 'Scanning files...', 'vw-translate' ),
 					'scanComplete'  => __( 'Scan complete!', 'vw-translate' ),
 					'scanError'     => __( 'Scan failed. Please try again.', 'vw-translate' ),

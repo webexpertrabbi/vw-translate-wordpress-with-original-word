@@ -312,24 +312,43 @@
 			html += '<div class="vwt-inline-editor" data-string-id="' + stringId + '">';
 			html += '<div class="editor-original"><strong>Original:</strong> <code>' + $('<span>').text(data.string.original_string).html() + '</code></div>';
 
+			var siteOriginalLang = (vwTranslate.siteOriginalLanguage || 'en').toLowerCase();
+			var originalString = data.string.original_string || '';
+
 			if (data.languages && data.languages.length > 0) {
 				$.each(data.languages, function (i, lang) {
+					var isSourceLang = (lang.language_code.toLowerCase() === siteOriginalLang);
 					var existingTranslation = data.translations[lang.language_code] || '';
-					html += '<div class="editor-lang-row" data-lang="' + lang.language_code + '">';
+					var displayValue = existingTranslation;
+
+					// Pre-fill the source language with the original string if no translation exists yet.
+					if (isSourceLang && !existingTranslation) {
+						displayValue = originalString;
+					}
+
+					var readonlyAttr = isSourceLang && displayValue === originalString ? ' readonly' : '';
+					var readonlyClass = isSourceLang && displayValue === originalString ? ' vwt-source-lang' : '';
+
+					html += '<div class="editor-lang-row' + readonlyClass + '" data-lang="' + lang.language_code + '">';
 					html += '<div class="editor-lang-label">';
 					if (lang.flag) {
 						html += '<span class="lang-flag">' + lang.flag + '</span>';
 					}
 					html += '<span>' + $('<span>').text(lang.language_name).html() + '</span>';
+					if (isSourceLang) {
+						html += ' <span class="vwt-source-badge">Source</span>';
+					}
 					html += '</div>';
 					html += '<div class="editor-lang-input">';
 					html += '<textarea class="vw-translate-translation-input" placeholder="Enter translation for ' +
-						$('<span>').text(lang.language_name).html() + '…" data-lang="' + lang.language_code + '">' +
-						$('<span>').text(existingTranslation).html() + '</textarea>';
+						$('<span>').text(lang.language_name).html() + '…" data-lang="' + lang.language_code + '"' + readonlyAttr + '>' +
+						$('<span>').text(displayValue).html() + '</textarea>';
 					html += '</div>';
 					html += '<div class="editor-lang-save">';
-					html += '<button type="button" class="vwt-btn vwt-btn-sm vw-translate-save-single" data-string-id="' +
-						stringId + '" data-lang="' + lang.language_code + '">Save</button>';
+					if (!isSourceLang || existingTranslation) {
+						html += '<button type="button" class="vwt-btn vwt-btn-sm vw-translate-save-single" data-string-id="' +
+							stringId + '" data-lang="' + lang.language_code + '">Save</button>';
+					}
 					html += '<span class="vwt-saved-check">✓ Saved</span>';
 					html += '</div>';
 					html += '</div>';

@@ -670,6 +670,37 @@
 	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
+/* Source language row styling */
+.vwt-inline-editor .editor-lang-row.vwt-source-lang {
+	background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+	border-radius: var(--vwt-radius-sm);
+	padding: 12px 14px;
+	border-left: 3px solid #22c55e;
+	margin-bottom: 14px;
+}
+
+.vwt-inline-editor .editor-lang-row.vwt-source-lang textarea {
+	background-color: #f9fafb;
+	color: var(--vwt-gray-600);
+	cursor: default;
+	border-style: dashed;
+	border-color: var(--vwt-gray-300);
+}
+
+.vwt-source-badge {
+	display: inline-flex;
+	align-items: center;
+	font-size: 10px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: #15803d;
+	background: #dcfce7;
+	padding: 2px 7px;
+	border-radius: 999px;
+	line-height: 1.5;
+}
+
 .vwt-inline-editor .editor-lang-save {
 	padding-top: 8px;
 	display: flex;
