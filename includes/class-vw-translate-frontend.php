@@ -1,0 +1,618 @@
+<?php
+/**
+ * Frontend functionality for VW Translate.
+ *
+ * @package VW_Translate
+ * @since   1.0.0
+ */
+
+// If this file is called directly, abort.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Class VW_Translate_Frontend
+ *
+ * Handles frontend string replacement using output buffering
+ * and provides the language switcher.
+ *
+ * @since 1.0.0
+ */
+class VW_Translate_Frontend {
+
+	/**
+	 * Current language code.
+	 *
+	 * @since 1.0.0
+	 * @var string
+	 */
+	private static $current_language = '';
+
+	/**
+	 * Cached translations.
+	 *
+	 * @since 1.0.0
+	 * @var array|null
+	 */
+	private static $translations_cache = null;
+
+	/**
+	 * Initialize frontend hooks.
+	 *
+	 * @since 1.0.0
+	 */
+	public function init() {
+
+		// Don't run in admin unless specifically enabled.
+		if ( is_admin() && get_option( 'vw_translate_exclude_admin', 1 ) ) {
+			return;
+		}
+
+		// Detect and set current language.
+		add_action( 'init', array( $this, 'detect_language' ), 1 );
+
+		// Start output buffering for string replacement.
+		add_action( 'template_redirect', array( $this, 'start_output_buffer' ), 1 );
+
+		// Add language switcher to frontend.
+		add_action( 'wp_footer', array( $this, 'render_floating_switcher' ) );
+
+		// Enqueue frontend styles.
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_frontend_assets' ) );
+
+		// Set HTML lang attribute.
+		add_filter( 'language_attributes', array( $this, 'filter_language_attributes' ) );
+	}
+
+	/**
+	 * Detect the current language from URL parameter or cookie.
+	 *
+	 * @since 1.0.0
+	 */
+	public function detect_language() {
+
+		$default_lang = self::get_default_language_code();
+
+		// 1. Check URL parameter.
+		if ( get_option( 'vw_translate_enable_url_param', 1 ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			if ( isset( $_GET['lang'] ) ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$lang = sanitize_text_field( wp_unslash( $_GET['lang'] ) );
+				if ( self::is_valid_language( $lang ) ) {
+					self::$current_language = $lang;
+					$this->set_language_cookie( $lang );
+					return;
+				}
+			}
+		}
+
+		// 2. Check cookie.
+		if ( get_option( 'vw_translate_enable_cookie', 1 ) ) {
+			if ( isset( $_COOKIE['vw_translate_lang'] ) ) {
+				$lang = sanitize_text_field( wp_unslash( $_COOKIE['vw_translate_lang'] ) );
+				if ( self::is_valid_language( $lang ) ) {
+					self::$current_language = $lang;
+					return;
+				}
+			}
+		}
+
+		// 3. Default language.
+		self::$current_language = $default_lang;
+	}
+
+	/**
+	 * Set a language cookie.
+	 *
+	 * @since 1.0.0
+	 * @param string $lang Language code.
+	 */
+	private function set_language_cookie( $lang ) {
+
+		if ( ! get_option( 'vw_translate_enable_cookie', 1 ) ) {
+			return;
+		}
+
+		$duration = (int) get_option( 'vw_translate_cookie_duration', 30 );
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.setcookie_setcookie
+		setcookie(
+			'vw_translate_lang',
+			$lang,
+			array(
+				'expires'  => time() + ( DAY_IN_SECONDS * $duration ),
+				'path'     => COOKIEPATH,
+				'domain'   => COOKIE_DOMAIN,
+				'secure'   => is_ssl(),
+				'httponly'  => false,
+				'samesite' => 'Lax',
+			)
+		);
+	}
+
+	/**
+	 * Check if a language code is valid (exists and is active).
+	 *
+	 * @since 1.0.0
+	 * @param string $lang Language code.
+	 * @return bool True if valid.
+	 */
+	private static function is_valid_language( $lang ) {
+
+		$language = VW_Translate_DB::get_language( $lang );
+		return $language && $language->is_active;
+	}
+
+	/**
+	 * Get the current language code.
+	 *
+	 * @since 1.0.0
+	 * @return string Language code.
+	 */
+	public static function get_current_language() {
+
+		if ( empty( self::$current_language ) ) {
+			self::$current_language = self::get_default_language_code();
+		}
+
+		return self::$current_language;
+	}
+
+	/**
+	 * Get the default language code.
+	 *
+	 * @since 1.0.0
+	 * @return string Default language code.
+	 */
+	public static function get_default_language_code() {
+
+		$default = VW_Translate_DB::get_default_language();
+		return $default ? $default->language_code : 'en';
+	}
+
+	/**
+	 * Start output buffering.
+	 *
+	 * @since 1.0.0
+	 */
+	public function start_output_buffer() {
+
+		// Bypass during frontend scanning to get original strings.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['vw_translate_bypass'] ) ) {
+			return;
+		}
+
+		$current_lang = self::get_current_language();
+
+		// The site original language is the language of the actual HTML content
+		// (e.g., English). We only skip buffering when the visitor is viewing
+		// the site in that original language — because there is nothing to replace.
+		$site_original = get_option( 'vw_translate_site_original_language', '' );
+
+		// Fallback: if the option was never set, detect from WP locale.
+		if ( empty( $site_original ) ) {
+			$site_original = strtolower( substr( get_locale(), 0, 2 ) );
+		}
+
+		// If the current language IS the site original language, no translation needed.
+		if ( $current_lang === $site_original ) {
+			return;
+		}
+
+		ob_start( array( $this, 'process_output_buffer' ) );
+	}
+
+	/**
+	 * Process the output buffer and replace strings.
+	 *
+	 * @since 1.0.0
+	 * @param string $buffer HTML output buffer.
+	 * @return string Modified HTML output.
+	 */
+	public function process_output_buffer( $buffer ) {
+
+		if ( empty( $buffer ) ) {
+			return $buffer;
+		}
+
+		$current_lang = self::get_current_language();
+		$translations = self::get_translations( $current_lang );
+
+		if ( empty( $translations ) ) {
+			return $buffer;
+		}
+
+		// Replace strings - translations are already sorted by length (longest first)
+		// to prevent partial replacements.
+		foreach ( $translations as $translation ) {
+			$original   = $translation->original_string;
+			$translated = $translation->translated_string;
+
+			if ( empty( $translated ) || $original === $translated ) {
+				continue;
+			}
+
+			// Quick check: skip if original string is not present in this page.
+			if ( false === strpos( $buffer, $original ) ) {
+				continue;
+			}
+
+			// Replace in text content (not in HTML attributes, tags, or scripts).
+			$buffer = $this->safe_replace( $buffer, $original, $translated );
+		}
+
+		return $buffer;
+	}
+
+	/**
+	 * Safely replace strings in HTML content.
+	 *
+	 * Avoids replacing strings inside HTML tags, attributes,
+	 * script blocks, and style blocks.
+	 *
+	 * @since 1.0.0
+	 * @param string $html     HTML content.
+	 * @param string $search   String to search for.
+	 * @param string $replace  Replacement string.
+	 * @return string Modified HTML.
+	 */
+	private function safe_replace( $html, $search, $replace ) {
+
+		// Split HTML into parts: tags and text.
+		$parts  = preg_split( '/(<[^>]*>)/s', $html, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY );
+		$result = '';
+
+		$in_script = false;
+		$in_style  = false;
+
+		if ( false === $parts ) {
+			// If regex fails, do simple replacement.
+			return str_replace( $search, $replace, $html );
+		}
+
+		foreach ( $parts as $part ) {
+			// Check for script/style tags.
+			if ( preg_match( '/<script[\s>]/i', $part ) ) {
+				$in_script = true;
+				$result   .= $part;
+				continue;
+			}
+			if ( preg_match( '/<\/script>/i', $part ) ) {
+				$in_script = false;
+				$result   .= $part;
+				continue;
+			}
+			if ( preg_match( '/<style[\s>]/i', $part ) ) {
+				$in_style = true;
+				$result  .= $part;
+				continue;
+			}
+			if ( preg_match( '/<\/style>/i', $part ) ) {
+				$in_style = false;
+				$result  .= $part;
+				continue;
+			}
+
+			// Skip if inside script or style.
+			if ( $in_script || $in_style ) {
+				$result .= $part;
+				continue;
+			}
+
+			// Skip HTML tags.
+			if ( strpos( $part, '<' ) === 0 ) {
+				// But do replace in title, alt, placeholder, and value attributes.
+				if ( preg_match( '/(title|alt|placeholder|value|aria-label|content)=["\']/', $part ) ) {
+					$part = str_replace( $search, $replace, $part );
+				}
+				$result .= $part;
+				continue;
+			}
+
+			// Replace in text content.
+			$result .= str_replace( $search, $replace, $part );
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Get all translations for a language (with caching).
+	 *
+	 * @since 1.0.0
+	 * @param string $language_code Language code.
+	 * @return array Array of translation objects.
+	 */
+	public static function get_translations( $language_code ) {
+
+		if ( null !== self::$translations_cache ) {
+			return self::$translations_cache;
+		}
+
+		$cache_enabled = get_option( 'vw_translate_cache_translations', 1 );
+		$cache_key     = 'vw_translate_cache_' . $language_code;
+
+		if ( $cache_enabled ) {
+			$cached = get_transient( $cache_key );
+			if ( false !== $cached ) {
+				self::$translations_cache = $cached;
+				return $cached;
+			}
+		}
+
+		$translations = VW_Translate_DB::get_all_translations_for_language( $language_code );
+
+		if ( $cache_enabled && ! empty( $translations ) ) {
+			$cache_hours = (int) get_option( 'vw_translate_cache_duration', 12 );
+			set_transient( $cache_key, $translations, $cache_hours * HOUR_IN_SECONDS );
+		}
+
+		self::$translations_cache = $translations;
+		return $translations;
+	}
+
+	/**
+	 * Enqueue frontend assets.
+	 *
+	 * @since 1.0.0
+	 */
+	public function enqueue_frontend_assets() {
+
+		if ( ! get_option( 'vw_translate_enable_switcher', 1 ) ) {
+			return;
+		}
+
+		wp_enqueue_style(
+			'vw-translate-frontend',
+			VW_TRANSLATE_PLUGIN_URL . 'admin/css/vw-translate-frontend.css',
+			array(),
+			VW_TRANSLATE_VERSION
+		);
+	}
+
+	/**
+	 * Render the floating language switcher.
+	 *
+	 * @since 1.0.0
+	 */
+	public function render_floating_switcher() {
+
+		if ( ! get_option( 'vw_translate_enable_switcher', 1 ) ) {
+			return;
+		}
+
+		$position = get_option( 'vw_translate_switcher_position', 'bottom-right' );
+
+		echo wp_kses_post( self::get_language_switcher( 'floating', $position ) );
+	}
+
+	/**
+	 * Filter the language attributes for the HTML tag.
+	 *
+	 * @since 1.0.0
+	 * @param string $output Language attributes string.
+	 * @return string Modified language attributes.
+	 */
+	public function filter_language_attributes( $output ) {
+
+		$current_lang = self::get_current_language();
+		$default_lang = self::get_default_language_code();
+
+		if ( $current_lang !== $default_lang ) {
+			$output = preg_replace( '/lang="[^"]*"/', 'lang="' . esc_attr( $current_lang ) . '"', $output );
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Generate language switcher HTML.
+	 *
+	 * @since 1.0.0
+	 * @param string $style    Switcher style: 'dropdown', 'list', 'flags', 'floating'.
+	 * @param string $position Position for floating style.
+	 * @return string Switcher HTML.
+	 */
+	public static function get_language_switcher( $style = 'dropdown', $position = '' ) {
+
+		$languages    = VW_Translate_DB::get_languages( true );
+		$current_lang = self::get_current_language();
+
+		if ( empty( $languages ) || count( $languages ) < 2 ) {
+			return '';
+		}
+
+		$current_url = home_url( add_query_arg( null, null ) );
+
+		ob_start();
+
+		switch ( $style ) {
+			case 'list':
+				self::render_list_switcher( $languages, $current_lang, $current_url );
+				break;
+
+			case 'flags':
+				self::render_flags_switcher( $languages, $current_lang, $current_url );
+				break;
+
+			case 'floating':
+				self::render_floating_switcher_html( $languages, $current_lang, $current_url, $position );
+				break;
+
+			case 'dropdown':
+			default:
+				self::render_dropdown_switcher( $languages, $current_lang, $current_url );
+				break;
+		}
+
+		return ob_get_clean();
+	}
+
+	/**
+	 * Build a language switch URL.
+	 *
+	 * @since 1.0.0
+	 * @param string $current_url Current page URL.
+	 * @param string $lang_code   Target language code.
+	 * @return string URL with language parameter.
+	 */
+	private static function build_lang_url( $current_url, $lang_code ) {
+		return esc_url( add_query_arg( 'lang', $lang_code, $current_url ) );
+	}
+
+	/**
+	 * Render dropdown style switcher.
+	 *
+	 * @since 1.0.0
+	 * @param array  $languages    Available languages.
+	 * @param string $current_lang Current language code.
+	 * @param string $current_url  Current page URL.
+	 */
+	private static function render_dropdown_switcher( $languages, $current_lang, $current_url ) {
+		?>
+		<div class="vw-translate-switcher vw-translate-dropdown">
+			<select onchange="if(this.value) window.location.href=this.value;" aria-label="<?php esc_attr_e( 'Select Language', 'vw-translate' ); ?>">
+				<?php foreach ( $languages as $lang ) : ?>
+					<option value="<?php echo esc_url( self::build_lang_url( $current_url, $lang->language_code ) ); ?>"
+						<?php selected( $current_lang, $lang->language_code ); ?>>
+						<?php
+						if ( ! empty( $lang->flag ) ) {
+							echo esc_html( $lang->flag . ' ' );
+						}
+						echo esc_html( ! empty( $lang->native_name ) ? $lang->native_name : $lang->language_name );
+						?>
+					</option>
+				<?php endforeach; ?>
+			</select>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render list style switcher.
+	 *
+	 * @since 1.0.0
+	 * @param array  $languages    Available languages.
+	 * @param string $current_lang Current language code.
+	 * @param string $current_url  Current page URL.
+	 */
+	private static function render_list_switcher( $languages, $current_lang, $current_url ) {
+		?>
+		<ul class="vw-translate-switcher vw-translate-list">
+			<?php foreach ( $languages as $lang ) : ?>
+				<li class="<?php echo $current_lang === $lang->language_code ? 'vw-translate-active' : ''; ?>">
+					<a href="<?php echo esc_url( self::build_lang_url( $current_url, $lang->language_code ) ); ?>"
+					   hreflang="<?php echo esc_attr( $lang->language_code ); ?>">
+						<?php
+						if ( ! empty( $lang->flag ) ) {
+							echo '<span class="vw-translate-flag">' . esc_html( $lang->flag ) . '</span> ';
+						}
+						echo esc_html( ! empty( $lang->native_name ) ? $lang->native_name : $lang->language_name );
+						?>
+					</a>
+				</li>
+			<?php endforeach; ?>
+		</ul>
+		<?php
+	}
+
+	/**
+	 * Render flags-only style switcher.
+	 *
+	 * @since 1.0.0
+	 * @param array  $languages    Available languages.
+	 * @param string $current_lang Current language code.
+	 * @param string $current_url  Current page URL.
+	 */
+	private static function render_flags_switcher( $languages, $current_lang, $current_url ) {
+		?>
+		<div class="vw-translate-switcher vw-translate-flags">
+			<?php foreach ( $languages as $lang ) : ?>
+				<a href="<?php echo esc_url( self::build_lang_url( $current_url, $lang->language_code ) ); ?>"
+				   hreflang="<?php echo esc_attr( $lang->language_code ); ?>"
+				   title="<?php echo esc_attr( ! empty( $lang->native_name ) ? $lang->native_name : $lang->language_name ); ?>"
+				   class="vw-translate-flag-link <?php echo $current_lang === $lang->language_code ? 'vw-translate-active' : ''; ?>">
+					<?php echo esc_html( ! empty( $lang->flag ) ? $lang->flag : $lang->language_code ); ?>
+				</a>
+			<?php endforeach; ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render floating style switcher.
+	 *
+	 * @since 1.0.0
+	 * @param array  $languages    Available languages.
+	 * @param string $current_lang Current language code.
+	 * @param string $current_url  Current page URL.
+	 * @param string $position     Position class.
+	 */
+	private static function render_floating_switcher_html( $languages, $current_lang, $current_url, $position = 'bottom-right' ) {
+
+		$current_lang_obj = null;
+		foreach ( $languages as $lang ) {
+			if ( $lang->language_code === $current_lang ) {
+				$current_lang_obj = $lang;
+				break;
+			}
+		}
+		?>
+		<div class="vw-translate-floating vw-translate-position-<?php echo esc_attr( $position ); ?>" id="vw-translate-floating">
+			<button type="button" class="vw-translate-floating-toggle" aria-expanded="false" aria-label="<?php esc_attr_e( 'Switch Language', 'vw-translate' ); ?>">
+				<span class="vw-translate-current-flag">
+					<?php
+					if ( $current_lang_obj && ! empty( $current_lang_obj->flag ) ) {
+						echo esc_html( $current_lang_obj->flag );
+					} else {
+						echo '🌐';
+					}
+					?>
+				</span>
+				<span class="vw-translate-current-name">
+					<?php
+					if ( $current_lang_obj ) {
+						echo esc_html( ! empty( $current_lang_obj->native_name ) ? $current_lang_obj->native_name : $current_lang_obj->language_name );
+					}
+					?>
+				</span>
+			</button>
+			<div class="vw-translate-floating-dropdown" style="display:none;">
+				<?php foreach ( $languages as $lang ) : ?>
+					<a href="<?php echo esc_url( self::build_lang_url( $current_url, $lang->language_code ) ); ?>"
+					   hreflang="<?php echo esc_attr( $lang->language_code ); ?>"
+					   class="vw-translate-floating-item <?php echo $current_lang === $lang->language_code ? 'vw-translate-active' : ''; ?>">
+						<?php
+						if ( ! empty( $lang->flag ) ) {
+							echo '<span class="vw-translate-flag">' . esc_html( $lang->flag ) . '</span> ';
+						}
+						echo esc_html( ! empty( $lang->native_name ) ? $lang->native_name : $lang->language_name );
+						?>
+					</a>
+				<?php endforeach; ?>
+			</div>
+		</div>
+		<script>
+		(function(){
+			var toggle = document.querySelector('.vw-translate-floating-toggle');
+			var dropdown = document.querySelector('.vw-translate-floating-dropdown');
+			if(toggle && dropdown){
+				toggle.addEventListener('click', function(e){
+					e.stopPropagation();
+					var isOpen = dropdown.style.display !== 'none';
+					dropdown.style.display = isOpen ? 'none' : 'block';
+					toggle.setAttribute('aria-expanded', !isOpen);
+				});
+				document.addEventListener('click', function(){
+					dropdown.style.display = 'none';
+					toggle.setAttribute('aria-expanded', 'false');
+				});
+			}
+		})();
+		</script>
+		<?php
+	}
+}
