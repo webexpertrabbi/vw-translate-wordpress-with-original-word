@@ -14,6 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Get query parameters.
 $search      = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $source_type = isset( $_GET['source_type'] ) ? sanitize_text_field( wp_unslash( $_GET['source_type'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$filter      = isset( $_GET['filter'] ) ? sanitize_text_field( wp_unslash( $_GET['filter'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $paged       = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $per_page    = 20;
 $offset      = ( $paged - 1 ) * $per_page;
@@ -22,6 +23,7 @@ $offset      = ( $paged - 1 ) * $per_page;
 $args = array(
 	'status'      => 'active',
 	'source_type' => $source_type,
+	'filter'      => $filter,
 	'search'      => $search,
 	'per_page'    => $per_page,
 	'offset'      => $offset,
@@ -43,8 +45,33 @@ $stats     = VW_Translate_DB::get_stats();
 	<!-- Page Header -->
 	<div class="vwt-page-header">
 		<div class="page-title-area">
-			<h1><?php esc_html_e( 'All Strings', 'vw-translate' ); ?></h1>
-			<p><?php esc_html_e( 'Manage and translate all discovered strings from your last scan.', 'vw-translate' ); ?></p>
+			<h1>
+				<?php
+				if ( 'translated' === $filter ) {
+					esc_html_e( 'Translated Strings', 'vw-translate' );
+				} elseif ( 'untranslated' === $filter ) {
+					esc_html_e( 'Untranslated Strings', 'vw-translate' );
+				} else {
+					esc_html_e( 'All Strings', 'vw-translate' );
+				}
+				?>
+			</h1>
+			<p>
+				<?php
+				if ( 'translated' === $filter ) {
+					esc_html_e( 'Showing only strings that have at least one translation.', 'vw-translate' );
+				} elseif ( 'untranslated' === $filter ) {
+					esc_html_e( 'Showing only strings without any translation.', 'vw-translate' );
+				} else {
+					esc_html_e( 'Manage and translate all discovered strings from your last scan.', 'vw-translate' );
+				}
+				?>
+			</p>
+			<?php if ( ! empty( $filter ) ) : ?>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=vw-translate' ) ); ?>" class="vwt-btn vwt-btn-outline vwt-btn-sm" style="margin-top:6px;">
+					<?php esc_html_e( '← Show All Strings', 'vw-translate' ); ?>
+				</a>
+			<?php endif; ?>
 		</div>
 		<div class="header-actions">
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=vw-translate-scan' ) ); ?>" class="btn-header">
@@ -60,21 +87,27 @@ $stats     = VW_Translate_DB::get_stats();
 
 	<!-- Stats -->
 	<div class="vwt-stats-grid">
-		<div class="vwt-stat-card clr-purple">
-			<div class="stat-icon"><span class="dashicons dashicons-editor-textcolor"></span></div>
-			<span class="stat-number"><?php echo esc_html( $stats['total_strings'] ); ?></span>
-			<span class="stat-label"><?php esc_html_e( 'Total Strings', 'vw-translate' ); ?></span>
-		</div>
-		<div class="vwt-stat-card clr-green">
-			<div class="stat-icon"><span class="dashicons dashicons-translation"></span></div>
-			<span class="stat-number"><?php echo esc_html( $stats['total_translations'] ); ?></span>
-			<span class="stat-label"><?php esc_html_e( 'Translations', 'vw-translate' ); ?></span>
-		</div>
-		<div class="vwt-stat-card clr-blue">
-			<div class="stat-icon"><span class="dashicons dashicons-admin-site-alt3"></span></div>
-			<span class="stat-number"><?php echo esc_html( $stats['total_languages'] ); ?></span>
-			<span class="stat-label"><?php esc_html_e( 'Languages', 'vw-translate' ); ?></span>
-		</div>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=vw-translate' ) ); ?>" class="vwt-stat-card-link">
+			<div class="vwt-stat-card clr-purple">
+				<div class="stat-icon"><span class="dashicons dashicons-editor-textcolor"></span></div>
+				<span class="stat-number"><?php echo esc_html( $stats['total_strings'] ); ?></span>
+				<span class="stat-label"><?php esc_html_e( 'Total Strings', 'vw-translate' ); ?></span>
+			</div>
+		</a>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=vw-translate&filter=translated' ) ); ?>" class="vwt-stat-card-link">
+			<div class="vwt-stat-card clr-green">
+				<div class="stat-icon"><span class="dashicons dashicons-translation"></span></div>
+				<span class="stat-number"><?php echo esc_html( $stats['total_translations'] ); ?></span>
+				<span class="stat-label"><?php esc_html_e( 'Translations', 'vw-translate' ); ?></span>
+			</div>
+		</a>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=vw-translate-languages' ) ); ?>" class="vwt-stat-card-link">
+			<div class="vwt-stat-card clr-blue">
+				<div class="stat-icon"><span class="dashicons dashicons-admin-site-alt3"></span></div>
+				<span class="stat-number"><?php echo esc_html( $stats['total_languages'] ); ?></span>
+				<span class="stat-label"><?php esc_html_e( 'Languages', 'vw-translate' ); ?></span>
+			</div>
+		</a>
 	</div>
 
 	<!-- Add Manual String -->
@@ -206,6 +239,9 @@ $stats     = VW_Translate_DB::get_stats();
 						}
 						if ( $source_type ) {
 							$base_url = add_query_arg( 'source_type', $source_type, $base_url );
+						}
+						if ( $filter ) {
+							$base_url = add_query_arg( 'filter', $filter, $base_url );
 						}
 
 						if ( $paged > 1 ) :

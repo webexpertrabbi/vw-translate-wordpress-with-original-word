@@ -52,6 +52,9 @@ class VW_Translate_Frontend {
 		// Detect and set current language.
 		add_action( 'init', array( $this, 'detect_language' ), 1 );
 
+		// Redirect to ?lang=default when no lang param is present.
+		add_action( 'template_redirect', array( $this, 'maybe_redirect_to_default_language' ), 0 );
+
 		// Start output buffering for string replacement.
 		add_action( 'template_redirect', array( $this, 'start_output_buffer' ), 1 );
 
@@ -80,6 +83,15 @@ class VW_Translate_Frontend {
 			if ( isset( $_GET['lang'] ) ) {
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				$lang = sanitize_text_field( wp_unslash( $_GET['lang'] ) );
+
+				// If the visitor explicitly selects the DEFAULT language, clear any
+				// non-default override cookie so the site resets to its default state.
+				if ( $lang === $default_lang ) {
+					$this->clear_language_cookie();
+					self::$current_language = $default_lang;
+					return;
+				}
+
 				if ( self::is_valid_language( $lang ) ) {
 					self::$current_language = $lang;
 					$this->set_language_cookie( $lang );
@@ -88,11 +100,16 @@ class VW_Translate_Frontend {
 			}
 		}
 
-		// 2. Check cookie.
+		// 2. Check cookie. Only respect a cookie that stores a NON-DEFAULT language.
+		// Cookies for the default language are never stored, so this always
+		// represents an explicit visitor override.
 		if ( get_option( 'vw_translate_enable_cookie', 1 ) ) {
 			if ( isset( $_COOKIE['vw_translate_lang'] ) ) {
 				$lang = sanitize_text_field( wp_unslash( $_COOKIE['vw_translate_lang'] ) );
-				if ( self::is_valid_language( $lang ) ) {
+				// Ignore cookie if it equals the default language (cleanup stale cookies).
+				if ( $lang === $default_lang ) {
+					$this->clear_language_cookie();
+				} elseif ( self::is_valid_language( $lang ) ) {
 					self::$current_language = $lang;
 					return;
 				}
@@ -106,12 +123,23 @@ class VW_Translate_Frontend {
 	/**
 	 * Set a language cookie.
 	 *
+	 * We NEVER store the default language in the cookie. The cookie exists only
+	 * to remember a visitor's explicit choice of a NON-default language. This
+	 * ensures that when the default language is changed in the admin, existing
+	 * visitors automatically see the new default (unless they explicitly switched).
+	 *
 	 * @since 1.0.0
 	 * @param string $lang Language code.
 	 */
 	private function set_language_cookie( $lang ) {
 
 		if ( ! get_option( 'vw_translate_enable_cookie', 1 ) ) {
+			return;
+		}
+
+		// If the language IS the default, clear any stale cookie instead of setting one.
+		if ( $lang === self::get_default_language_code() ) {
+			$this->clear_language_cookie();
 			return;
 		}
 
@@ -130,6 +158,35 @@ class VW_Translate_Frontend {
 				'samesite' => 'Lax',
 			)
 		);
+	}
+
+	/**
+	 * Clear / expire the language cookie.
+	 *
+	 * @since 1.1.0
+	 */
+	private function clear_language_cookie() {
+
+		if ( ! isset( $_COOKIE['vw_translate_lang'] ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.setcookie_setcookie
+		setcookie(
+			'vw_translate_lang',
+			'',
+			array(
+				'expires'  => time() - HOUR_IN_SECONDS,
+				'path'     => COOKIEPATH,
+				'domain'   => COOKIE_DOMAIN,
+				'secure'   => is_ssl(),
+				'httponly'  => false,
+				'samesite' => 'Lax',
+			)
+		);
+
+		// Immediately clear from the current request too.
+		unset( $_COOKIE['vw_translate_lang'] );
 	}
 
 	/**
@@ -173,6 +230,62 @@ class VW_Translate_Frontend {
 	}
 
 	/**
+	 * Redirect to the URL with the default ?lang= param when none is present.
+	 *
+	 * This ensures every page load has an explicit lang parameter so the
+	 * language is always unambiguous. When a visitor hits the site without
+	 * any ?lang= in the URL, they are transparently redirected to the same
+	 * URL with ?lang=<default_code> appended (302, no SEO penalty since
+	 * the URL is otherwise identical).
+	 *
+	 * @since 1.1.0
+	 */
+	public function maybe_redirect_to_default_language() {
+
+		// Skip if URL parameter feature is disabled.
+		if ( ! get_option( 'vw_translate_enable_url_param', 1 ) ) {
+			return;
+		}
+
+		// Skip if ?lang= is already present.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['lang'] ) ) {
+			return;
+		}
+
+		// Skip for AJAX, REST, cron, and feed requests.
+		if ( wp_doing_ajax() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || is_feed() ) {
+			return;
+		}
+
+		// Skip during frontend scanning.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['vw_translate_bypass'] ) ) {
+			return;
+		}
+
+		$default_lang = self::get_default_language_code();
+
+		// Determine which language to redirect to:
+		// If the visitor has a valid non-default cookie, preserve their choice;
+		// otherwise redirect to the default language.
+		$redirect_lang = $default_lang;
+
+		if ( get_option( 'vw_translate_enable_cookie', 1 ) && isset( $_COOKIE['vw_translate_lang'] ) ) {
+			$cookie_lang = sanitize_text_field( wp_unslash( $_COOKIE['vw_translate_lang'] ) );
+			if ( $cookie_lang !== $default_lang && self::is_valid_language( $cookie_lang ) ) {
+				$redirect_lang = $cookie_lang;
+			}
+		}
+
+		$current_url  = home_url( add_query_arg( null, null ) );
+		$redirect_url = add_query_arg( 'lang', $redirect_lang, $current_url );
+
+		wp_redirect( $redirect_url, 302 );
+		exit;
+	}
+
+	/**
 	 * Start output buffering.
 	 *
 	 * @since 1.0.0
@@ -185,23 +298,12 @@ class VW_Translate_Frontend {
 			return;
 		}
 
-		$current_lang = self::get_current_language();
-
-		// The site original language is the language of the actual HTML content
-		// (e.g., English). We only skip buffering when the visitor is viewing
-		// the site in that original language — because there is nothing to replace.
-		$site_original = get_option( 'vw_translate_site_original_language', '' );
-
-		// Fallback: if the option was never set, detect from WP locale.
-		if ( empty( $site_original ) ) {
-			$site_original = strtolower( substr( get_locale(), 0, 2 ) );
-		}
-
-		// If the current language IS the site original language, no translation needed.
-		if ( $current_lang === $site_original ) {
-			return;
-		}
-
+		// Always start the output buffer. The page content may be written in a
+		// language that differs from the current/default language (e.g., Polish
+		// content with English set as default). process_output_buffer() will
+		// look up translations for the current language and replace matching
+		// original strings. If no translations exist, the buffer is returned
+		// unchanged — so there is no harm in always buffering.
 		ob_start( array( $this, 'process_output_buffer' ) );
 	}
 
@@ -220,28 +322,49 @@ class VW_Translate_Frontend {
 
 		$current_lang = self::get_current_language();
 		$translations = self::get_translations( $current_lang );
+		$total_trans  = is_array( $translations ) ? count( $translations ) : 0;
+		$replaced     = 0;
 
-		if ( empty( $translations ) ) {
-			return $buffer;
+		if ( ! empty( $translations ) ) {
+			// Replace strings - translations are already sorted by length (longest first)
+			// to prevent partial replacements.
+			foreach ( $translations as $translation ) {
+				$original   = $translation->original_string;
+				$translated = $translation->translated_string;
+
+				if ( empty( $translated ) || $original === $translated ) {
+					continue;
+				}
+
+				// Quick check: skip if original string is not present in this page.
+				if ( false === strpos( $buffer, $original ) ) {
+					continue;
+				}
+
+				// Replace in text content (not in HTML attributes, tags, or scripts).
+				$buffer = $this->safe_replace( $buffer, $original, $translated );
+				$replaced++;
+			}
 		}
 
-		// Replace strings - translations are already sorted by length (longest first)
-		// to prevent partial replacements.
-		foreach ( $translations as $translation ) {
-			$original   = $translation->original_string;
-			$translated = $translation->translated_string;
+		// Add debug comment (visible in View Source) so admins can verify the plugin is active.
+		$cookie_val = isset( $_COOKIE['vw_translate_lang'] )
+			? sanitize_text_field( wp_unslash( $_COOKIE['vw_translate_lang'] ) )
+			: 'none';
 
-			if ( empty( $translated ) || $original === $translated ) {
-				continue;
-			}
+		$debug = sprintf(
+			'<!-- VW Translate: lang=%s, cookie=%s, translations=%d, applied=%d -->',
+			esc_attr( $current_lang ),
+			esc_attr( $cookie_val ),
+			$total_trans,
+			$replaced
+		);
 
-			// Quick check: skip if original string is not present in this page.
-			if ( false === strpos( $buffer, $original ) ) {
-				continue;
-			}
-
-			// Replace in text content (not in HTML attributes, tags, or scripts).
-			$buffer = $this->safe_replace( $buffer, $original, $translated );
+		// Insert before closing </body> tag if present, otherwise append.
+		if ( false !== stripos( $buffer, '</body>' ) ) {
+			$buffer = str_ireplace( '</body>', $debug . "\n</body>", $buffer );
+		} else {
+			$buffer .= $debug;
 		}
 
 		return $buffer;
@@ -337,7 +460,7 @@ class VW_Translate_Frontend {
 
 		if ( $cache_enabled ) {
 			$cached = get_transient( $cache_key );
-			if ( false !== $cached ) {
+			if ( false !== $cached && is_array( $cached ) ) {
 				self::$translations_cache = $cached;
 				return $cached;
 			}
@@ -352,6 +475,23 @@ class VW_Translate_Frontend {
 
 		self::$translations_cache = $translations;
 		return $translations;
+	}
+
+	/**
+	 * Clear ALL translation caches for every active language.
+	 *
+	 * @since 1.1.0
+	 */
+	public static function clear_all_translation_caches() {
+		$languages = VW_Translate_DB::get_languages( true );
+		if ( ! empty( $languages ) ) {
+			foreach ( $languages as $lang ) {
+				delete_transient( 'vw_translate_cache_' . $lang->language_code );
+			}
+		}
+		// Also clear the legacy key.
+		delete_transient( 'vw_translate_translations_cache' );
+		self::$translations_cache = null;
 	}
 
 	/**
@@ -416,7 +556,12 @@ class VW_Translate_Frontend {
 	 * @param string $position Position for floating style.
 	 * @return string Switcher HTML.
 	 */
-	public static function get_language_switcher( $style = 'dropdown', $position = '' ) {
+	public static function get_language_switcher( $style = '', $position = '' ) {
+
+		// If no explicit style is passed, use the admin-saved shortcode style.
+		if ( empty( $style ) || 'default' === $style ) {
+			$style = get_option( 'vw_translate_shortcode_style', 'dropdown' );
+		}
 
 		$languages    = VW_Translate_DB::get_languages( true );
 		$current_lang = self::get_current_language();
@@ -430,6 +575,22 @@ class VW_Translate_Frontend {
 		ob_start();
 
 		switch ( $style ) {
+			case 'pills':
+				self::render_pills_switcher( $languages, $current_lang, $current_url );
+				break;
+
+			case 'minimal':
+				self::render_minimal_switcher( $languages, $current_lang, $current_url );
+				break;
+
+			case 'cards':
+				self::render_cards_switcher( $languages, $current_lang, $current_url );
+				break;
+
+			case 'elegant':
+				self::render_elegant_switcher( $languages, $current_lang, $current_url );
+				break;
+
 			case 'list':
 				self::render_list_switcher( $languages, $current_lang, $current_url );
 				break;
@@ -473,7 +634,7 @@ class VW_Translate_Frontend {
 	 */
 	private static function render_dropdown_switcher( $languages, $current_lang, $current_url ) {
 		?>
-		<div class="vw-translate-switcher vw-translate-dropdown">
+		<div class="vwt-ls vwt-style-dropdown">
 			<select onchange="if(this.value) window.location.href=this.value;" aria-label="<?php esc_attr_e( 'Select Language', 'vw-translate' ); ?>">
 				<?php foreach ( $languages as $lang ) : ?>
 					<option value="<?php echo esc_url( self::build_lang_url( $current_url, $lang->language_code ) ); ?>"
@@ -488,6 +649,146 @@ class VW_Translate_Frontend {
 				<?php endforeach; ?>
 			</select>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Render pills style switcher.
+	 *
+	 * @since 1.1.0
+	 */
+	private static function render_pills_switcher( $languages, $current_lang, $current_url ) {
+		?>
+		<div class="vwt-ls vwt-style-pills">
+			<?php foreach ( $languages as $lang ) : ?>
+				<a href="<?php echo esc_url( self::build_lang_url( $current_url, $lang->language_code ) ); ?>"
+				   hreflang="<?php echo esc_attr( $lang->language_code ); ?>"
+				   class="<?php echo $current_lang === $lang->language_code ? 'vwt-active' : ''; ?>">
+					<?php if ( ! empty( $lang->flag ) ) : ?>
+						<span class="vwt-flag"><?php echo esc_html( $lang->flag ); ?></span>
+					<?php endif; ?>
+					<?php echo esc_html( ! empty( $lang->native_name ) ? $lang->native_name : $lang->language_name ); ?>
+					<span class="vwt-code"><?php echo esc_html( strtoupper( $lang->language_code ) ); ?></span>
+				</a>
+			<?php endforeach; ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render minimal style switcher.
+	 *
+	 * @since 1.1.0
+	 */
+	private static function render_minimal_switcher( $languages, $current_lang, $current_url ) {
+		?>
+		<div class="vwt-ls vwt-style-minimal">
+			<?php foreach ( $languages as $i => $lang ) : ?>
+				<?php if ( $i > 0 ) : ?>
+					<span class="vwt-sep" aria-hidden="true"></span>
+				<?php endif; ?>
+				<a href="<?php echo esc_url( self::build_lang_url( $current_url, $lang->language_code ) ); ?>"
+				   hreflang="<?php echo esc_attr( $lang->language_code ); ?>"
+				   class="<?php echo $current_lang === $lang->language_code ? 'vwt-active' : ''; ?>">
+					<?php if ( ! empty( $lang->flag ) ) : ?>
+						<span class="vwt-flag"><?php echo esc_html( $lang->flag ); ?></span>
+					<?php endif; ?>
+					<?php echo esc_html( ! empty( $lang->native_name ) ? $lang->native_name : $lang->language_name ); ?>
+				</a>
+			<?php endforeach; ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render cards style switcher.
+	 *
+	 * @since 1.1.0
+	 */
+	private static function render_cards_switcher( $languages, $current_lang, $current_url ) {
+		?>
+		<div class="vwt-ls vwt-style-cards">
+			<?php foreach ( $languages as $lang ) : ?>
+				<a href="<?php echo esc_url( self::build_lang_url( $current_url, $lang->language_code ) ); ?>"
+				   hreflang="<?php echo esc_attr( $lang->language_code ); ?>"
+				   class="<?php echo $current_lang === $lang->language_code ? 'vwt-active' : ''; ?>">
+					<?php if ( ! empty( $lang->flag ) ) : ?>
+						<span class="vwt-flag"><?php echo esc_html( $lang->flag ); ?></span>
+					<?php endif; ?>
+					<span class="vwt-name"><?php echo esc_html( ! empty( $lang->native_name ) ? $lang->native_name : $lang->language_name ); ?></span>
+					<span class="vwt-code"><?php echo esc_html( strtoupper( $lang->language_code ) ); ?></span>
+				</a>
+			<?php endforeach; ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render elegant style switcher (custom gradient dropdown).
+	 *
+	 * @since 1.1.0
+	 */
+	private static function render_elegant_switcher( $languages, $current_lang, $current_url ) {
+
+		$current_lang_obj = null;
+		foreach ( $languages as $lang ) {
+			if ( $lang->language_code === $current_lang ) {
+				$current_lang_obj = $lang;
+				break;
+			}
+		}
+
+		$uid = 'vwt-elegant-' . wp_rand( 1000, 9999 );
+		?>
+		<div class="vwt-ls vwt-style-elegant" id="<?php echo esc_attr( $uid ); ?>">
+			<button type="button" class="vwt-elegant-toggle" aria-expanded="false" aria-haspopup="listbox">
+				<span class="vwt-flag">
+					<?php echo esc_html( ( $current_lang_obj && ! empty( $current_lang_obj->flag ) ) ? $current_lang_obj->flag : '&#127760;' ); ?>
+				</span>
+				<span class="vwt-name">
+					<?php
+					if ( $current_lang_obj ) {
+						echo esc_html( ! empty( $current_lang_obj->native_name ) ? $current_lang_obj->native_name : $current_lang_obj->language_name );
+					}
+					?>
+				</span>
+				<span class="vwt-chevron" aria-hidden="true">&#9660;</span>
+			</button>
+			<div class="vwt-elegant-dropdown" role="listbox">
+				<?php foreach ( $languages as $lang ) : ?>
+					<a href="<?php echo esc_url( self::build_lang_url( $current_url, $lang->language_code ) ); ?>"
+					   hreflang="<?php echo esc_attr( $lang->language_code ); ?>"
+					   class="vwt-elegant-item <?php echo $current_lang === $lang->language_code ? 'vwt-active' : ''; ?>"
+					   role="option" aria-selected="<?php echo $current_lang === $lang->language_code ? 'true' : 'false'; ?>">
+						<?php if ( ! empty( $lang->flag ) ) : ?>
+							<span class="vwt-flag"><?php echo esc_html( $lang->flag ); ?></span>
+						<?php endif; ?>
+						<span><?php echo esc_html( ! empty( $lang->native_name ) ? $lang->native_name : $lang->language_name ); ?></span>
+						<span class="vwt-check" aria-hidden="true">&#10003;</span>
+					</a>
+				<?php endforeach; ?>
+			</div>
+		</div>
+		<script>
+		(function(){
+			var w=document.getElementById('<?php echo esc_js( $uid ); ?>');
+			if(!w)return;
+			var b=w.querySelector('.vwt-elegant-toggle');
+			var d=w.querySelector('.vwt-elegant-dropdown');
+			b.addEventListener('click',function(e){
+				e.stopPropagation();
+				var o=d.classList.contains('vwt-open');
+				d.classList.toggle('vwt-open',!o);
+				b.setAttribute('aria-expanded',String(!o));
+			});
+			document.addEventListener('click',function(e){
+				if(!w.contains(e.target)){
+					d.classList.remove('vwt-open');
+					b.setAttribute('aria-expanded','false');
+				}
+			});
+		})();
+		</script>
 		<?php
 	}
 

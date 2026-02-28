@@ -402,14 +402,18 @@ class VW_Translate_Scanner {
 
 		$total_found = count( $all_strings );
 
-		// Clear all old strings so only this scan's results remain.
-		VW_Translate_DB::delete_all_strings();
-
-		// Insert strings into database.
+		// Insert new strings into database while preserving existing strings and their translations.
 		foreach ( $all_strings as $string_data ) {
-			$result = VW_Translate_DB::insert_string( $string_data );
-			if ( $result ) {
-				++$total_new;
+			$hash = ! empty( $string_data['string_hash'] ) ? $string_data['string_hash'] : md5( $string_data['original_string'] );
+			$existing = VW_Translate_DB::get_string_by_hash( $hash );
+
+			if ( $existing ) {
+				++$total_existing;
+			} else {
+				$result = VW_Translate_DB::insert_string( $string_data );
+				if ( $result ) {
+					++$total_new;
+				}
 			}
 		}
 

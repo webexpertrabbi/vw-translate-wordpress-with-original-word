@@ -74,6 +74,9 @@
 			// Save settings.
 			$(document).on('click', '#vw-translate-save-settings', this.saveSettings);
 
+			// Clear cache.
+			$(document).on('click', '#vw-translate-clear-cache', this.clearCache);
+
 			// Add manual string.
 			$(document).on('click', '#vw-translate-add-string-btn', this.addManualString);
 
@@ -312,47 +315,31 @@
 			html += '<div class="vwt-inline-editor" data-string-id="' + stringId + '">';
 			html += '<div class="editor-original"><strong>Original:</strong> <code>' + $('<span>').text(data.string.original_string).html() + '</code></div>';
 
-			var siteOriginalLang = (vwTranslate.siteOriginalLanguage || 'en').toLowerCase();
-			var originalString = data.string.original_string || '';
-
 			if (data.languages && data.languages.length > 0) {
+				html += '<div class="editor-langs-grid">';
 				$.each(data.languages, function (i, lang) {
-					var isSourceLang = (lang.language_code.toLowerCase() === siteOriginalLang);
 					var existingTranslation = data.translations[lang.language_code] || '';
-					var displayValue = existingTranslation;
 
-					// Pre-fill the source language with the original string if no translation exists yet.
-					if (isSourceLang && !existingTranslation) {
-						displayValue = originalString;
-					}
-
-					var readonlyAttr = isSourceLang && displayValue === originalString ? ' readonly' : '';
-					var readonlyClass = isSourceLang && displayValue === originalString ? ' vwt-source-lang' : '';
-
-					html += '<div class="editor-lang-row' + readonlyClass + '" data-lang="' + lang.language_code + '">';
+					html += '<div class="editor-lang-row" data-lang="' + lang.language_code + '">';
 					html += '<div class="editor-lang-label">';
 					if (lang.flag) {
 						html += '<span class="lang-flag">' + lang.flag + '</span>';
 					}
 					html += '<span>' + $('<span>').text(lang.language_name).html() + '</span>';
-					if (isSourceLang) {
-						html += ' <span class="vwt-source-badge">Source</span>';
-					}
 					html += '</div>';
 					html += '<div class="editor-lang-input">';
-					html += '<textarea class="vw-translate-translation-input" placeholder="Enter translation for ' +
-						$('<span>').text(lang.language_name).html() + '…" data-lang="' + lang.language_code + '"' + readonlyAttr + '>' +
-						$('<span>').text(displayValue).html() + '</textarea>';
+					html += '<textarea class="vw-translate-translation-input" placeholder="' +
+						$('<span>').text(lang.language_name).html() + '…" data-lang="' + lang.language_code + '">' +
+						$('<span>').text(existingTranslation).html() + '</textarea>';
 					html += '</div>';
 					html += '<div class="editor-lang-save">';
-					if (!isSourceLang || existingTranslation) {
-						html += '<button type="button" class="vwt-btn vwt-btn-sm vw-translate-save-single" data-string-id="' +
-							stringId + '" data-lang="' + lang.language_code + '">Save</button>';
-					}
-					html += '<span class="vwt-saved-check">✓ Saved</span>';
+					html += '<button type="button" class="vwt-btn vwt-btn-sm vw-translate-save-single" data-string-id="' +
+						stringId + '" data-lang="' + lang.language_code + '">Save</button>';
+					html += '<span class="vwt-saved-check">✓</span>';
 					html += '</div>';
 					html += '</div>';
 				});
+				html += '</div>';
 			} else {
 				html += '<div class="vwt-empty-state" style="padding:20px;"><p>No languages configured. Please add languages first.</p></div>';
 			}
@@ -696,7 +683,8 @@
 				scan_depth: $wrap.find('#vw-translate-scan-depth').val(),
 				exclude_admin: $wrap.find('#vw-translate-exclude-admin').is(':checked') ? 1 : 0,
 				cache_translations: $wrap.find('#vw-translate-cache-translations').is(':checked') ? 1 : 0,
-				cache_duration: $wrap.find('#vw-translate-cache-duration').val()
+				cache_duration: $wrap.find('#vw-translate-cache-duration').val(),
+				shortcode_style: $wrap.find('input[name="shortcode_style"]:checked').val() || 'dropdown'
 			};
 
 			$.ajax({
@@ -718,6 +706,42 @@
 				},
 				complete: function () {
 					$btn.prop('disabled', false).html('<span class="dashicons dashicons-saved"></span> Save Settings');
+				}
+			});
+		},
+
+		/**
+		 * Clear all translation caches.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		clearCache: function (e) {
+			e.preventDefault();
+
+			var $btn = $(this);
+
+			$.ajax({
+				url: vwTranslate.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'vw_translate_clear_cache',
+					nonce: vwTranslate.nonce
+				},
+				beforeSend: function () {
+					$btn.prop('disabled', true).text('Clearing...');
+				},
+				success: function (response) {
+					if (response.success) {
+						VWTranslateAdmin.showNotice(response.data.message, 'success');
+					} else {
+						VWTranslateAdmin.showNotice(response.data.message, 'error');
+					}
+				},
+				error: function () {
+					VWTranslateAdmin.showNotice('Failed to clear cache.', 'error');
+				},
+				complete: function () {
+					$btn.prop('disabled', false).html('<span class="dashicons dashicons-trash"></span> Clear Translation Cache');
 				}
 			});
 		},

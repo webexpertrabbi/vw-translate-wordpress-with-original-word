@@ -22,6 +22,8 @@ $scan_depth         = isset( $options['scan_depth'] )         ? (int) $options['
 $exclude_admin      = isset( $options['exclude_admin'] )      ? (bool) $options['exclude_admin']      : true;
 $cache_translations = isset( $options['cache_translations'] ) ? (bool) $options['cache_translations'] : true;
 $cache_duration     = isset( $options['cache_duration'] )     ? (int) $options['cache_duration']      : 12;
+$shortcode_style    = get_option( 'vw_translate_shortcode_style', 'dropdown' );
+$stats              = VW_Translate_DB::get_stats();
 ?>
 
 <div class="wrap vw-translate-wrap">
@@ -32,6 +34,31 @@ $cache_duration     = isset( $options['cache_duration'] )     ? (int) $options['
 			<h1><?php esc_html_e( 'Settings', 'vw-translate' ); ?></h1>
 			<p><?php esc_html_e( 'Configure how VW Translate behaves on your website.', 'vw-translate' ); ?></p>
 		</div>
+	</div>
+
+	<!-- Stats -->
+	<div class="vwt-stats-grid">
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=vw-translate' ) ); ?>" class="vwt-stat-card-link">
+			<div class="vwt-stat-card clr-purple">
+				<div class="stat-icon"><span class="dashicons dashicons-editor-textcolor"></span></div>
+				<span class="stat-number"><?php echo esc_html( $stats['total_strings'] ); ?></span>
+				<span class="stat-label"><?php esc_html_e( 'Total Strings', 'vw-translate' ); ?></span>
+			</div>
+		</a>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=vw-translate&filter=translated' ) ); ?>" class="vwt-stat-card-link">
+			<div class="vwt-stat-card clr-green">
+				<div class="stat-icon"><span class="dashicons dashicons-translation"></span></div>
+				<span class="stat-number"><?php echo esc_html( $stats['total_translations'] ); ?></span>
+				<span class="stat-label"><?php esc_html_e( 'Translations', 'vw-translate' ); ?></span>
+			</div>
+		</a>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=vw-translate-languages' ) ); ?>" class="vwt-stat-card-link">
+			<div class="vwt-stat-card clr-blue">
+				<div class="stat-icon"><span class="dashicons dashicons-admin-site-alt3"></span></div>
+				<span class="stat-number"><?php echo esc_html( $stats['total_languages'] ); ?></span>
+				<span class="stat-label"><?php esc_html_e( 'Languages', 'vw-translate' ); ?></span>
+			</div>
+		</a>
 	</div>
 
 	<!-- Translation Detection -->
@@ -120,6 +147,89 @@ $cache_duration     = isset( $options['cache_duration'] )     ? (int) $options['
 		</div>
 	</div>
 
+	<!-- Shortcode Switcher Style -->
+	<div class="vwt-card">
+		<div class="vwt-card-header">
+			<h3><span class="dashicons dashicons-admin-appearance"></span> <?php esc_html_e( 'Shortcode Switcher Style', 'vw-translate' ); ?></h3>
+		</div>
+		<div class="vwt-card-body">
+			<p class="description" style="margin:0 0 16px;">
+				<?php esc_html_e( 'Choose the default design for the', 'vw-translate' ); ?>
+				<code>[vw_translate_switcher]</code>
+				<?php esc_html_e( 'shortcode. You can still override per-block with', 'vw-translate' ); ?>
+				<code>[vw_translate_switcher style="pills"]</code>.
+			</p>
+			<div class="vwt-style-picker">
+
+				<!-- Dropdown -->
+				<label class="vwt-style-option">
+					<input type="radio" name="shortcode_style" value="dropdown" <?php checked( $shortcode_style, 'dropdown' ); ?>>
+					<div class="vwt-style-card">
+						<div class="vwt-style-preview">
+							<div class="vwt-prev-dropdown">&#127760; English</div>
+						</div>
+						<span class="vwt-style-label-text"><?php esc_html_e( 'Dropdown', 'vw-translate' ); ?></span>
+					</div>
+				</label>
+
+				<!-- Pills -->
+				<label class="vwt-style-option">
+					<input type="radio" name="shortcode_style" value="pills" <?php checked( $shortcode_style, 'pills' ); ?>>
+					<div class="vwt-style-card">
+						<div class="vwt-style-preview">
+							<div class="vwt-prev-pills">
+								<span class="act">&#127482;&#127480; EN</span>
+								<span>&#127477;&#127473; PL</span>
+							</div>
+						</div>
+						<span class="vwt-style-label-text"><?php esc_html_e( 'Pills', 'vw-translate' ); ?></span>
+					</div>
+				</label>
+
+				<!-- Minimal -->
+				<label class="vwt-style-option">
+					<input type="radio" name="shortcode_style" value="minimal" <?php checked( $shortcode_style, 'minimal' ); ?>>
+					<div class="vwt-style-card">
+						<div class="vwt-style-preview">
+							<div class="vwt-prev-minimal">
+								<span class="act">&#127482;&#127480; EN</span>
+								<span class="sep"></span>
+								<span>&#127477;&#127473; PL</span>
+							</div>
+						</div>
+						<span class="vwt-style-label-text"><?php esc_html_e( 'Minimal', 'vw-translate' ); ?></span>
+					</div>
+				</label>
+
+				<!-- Cards -->
+				<label class="vwt-style-option">
+					<input type="radio" name="shortcode_style" value="cards" <?php checked( $shortcode_style, 'cards' ); ?>>
+					<div class="vwt-style-card">
+						<div class="vwt-style-preview">
+							<div class="vwt-prev-cards">
+								<span class="act">&#127482;&#127480;<em>EN</em></span>
+								<span>&#127477;&#127473;<em>PL</em></span>
+							</div>
+						</div>
+						<span class="vwt-style-label-text"><?php esc_html_e( 'Cards', 'vw-translate' ); ?></span>
+					</div>
+				</label>
+
+				<!-- Elegant -->
+				<label class="vwt-style-option">
+					<input type="radio" name="shortcode_style" value="elegant" <?php checked( $shortcode_style, 'elegant' ); ?>>
+					<div class="vwt-style-card">
+						<div class="vwt-style-preview">
+							<div class="vwt-prev-elegant">&#127760; English</div>
+						</div>
+						<span class="vwt-style-label-text"><?php esc_html_e( 'Elegant', 'vw-translate' ); ?></span>
+					</div>
+				</label>
+
+			</div>
+		</div>
+	</div>
+
 	<!-- Scanner Settings -->
 	<div class="vwt-card">
 		<div class="vwt-card-header">
@@ -200,6 +310,24 @@ $cache_duration     = isset( $options['cache_duration'] )     ? (int) $options['
 			<span class="dashicons dashicons-saved"></span>
 			<?php esc_html_e( 'Save Settings', 'vw-translate' ); ?>
 		</button>
+		<button type="button" class="vwt-btn vwt-btn-outline vwt-btn-lg" id="vw-translate-clear-cache" style="margin-left: 10px;">
+			<span class="dashicons dashicons-trash"></span>
+			<?php esc_html_e( 'Clear Translation Cache', 'vw-translate' ); ?>
+		</button>
+	</div>
+
+	<!-- Cookie Reset Note -->
+	<div class="vwt-notice info" style="margin-top: 16px;">
+		<span class="dashicons dashicons-info"></span>
+		<?php
+		$default_lang = VW_Translate_DB::get_default_language();
+		$default_code = $default_lang ? $default_lang->language_code : 'en';
+		printf(
+			/* translators: %s: reset URL */
+			esc_html__( 'If your browser is showing a non-default language, visit %s to reset the language cookie and return to the default language.', 'vw-translate' ),
+			'<a href="' . esc_url( home_url( '/?lang=' . $default_code ) ) . '" target="_blank">' . esc_url( home_url( '/?lang=' . $default_code ) ) . '</a>'
+		);
+		?>
 	</div>
 
 </div>

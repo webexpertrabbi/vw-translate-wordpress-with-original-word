@@ -46,6 +46,7 @@ class VW_Translate_Admin {
 		add_action( 'wp_ajax_vw_translate_set_default_language', array( $this, 'ajax_set_default_language' ) );
 		add_action( 'wp_ajax_vw_translate_save_settings', array( $this, 'ajax_save_settings' ) );
 		add_action( 'wp_ajax_vw_translate_add_manual_string', array( $this, 'ajax_add_manual_string' ) );
+		add_action( 'wp_ajax_vw_translate_clear_cache', array( $this, 'ajax_clear_cache' ) );
 	}
 
 	/**
@@ -302,8 +303,9 @@ class VW_Translate_Admin {
 			wp_send_json_error( array( 'message' => __( 'Failed to save translation.', 'vw-translate' ) ) );
 		}
 
-		// Clear translation cache.
-		delete_transient( 'vw_translate_cache_' . $lang_code );
+		// Clear ALL translation caches (not just this language) so frontend
+		// picks up changes immediately for every language.
+		VW_Translate_Frontend::clear_all_translation_caches();
 
 		wp_send_json_success(
 			array(
@@ -492,6 +494,9 @@ class VW_Translate_Admin {
 			wp_send_json_error( array( 'message' => __( 'Failed to set default language.', 'vw-translate' ) ) );
 		}
 
+		// Clear all translation caches since default language changed.
+		VW_Translate_Frontend::clear_all_translation_caches();
+
 		wp_send_json_success(
 			array(
 				'message' => __( 'Default language updated.', 'vw-translate' ),
@@ -518,6 +523,7 @@ class VW_Translate_Admin {
 			'cookie_duration'    => isset( $_POST['cookie_duration'] ) ? absint( $_POST['cookie_duration'] ) : 30,
 			'enable_switcher'    => isset( $_POST['enable_switcher'] ) ? absint( $_POST['enable_switcher'] ) : 0,
 			'switcher_position'  => isset( $_POST['switcher_position'] ) ? sanitize_text_field( wp_unslash( $_POST['switcher_position'] ) ) : 'bottom-right',
+			'shortcode_style'    => isset( $_POST['shortcode_style'] ) ? sanitize_text_field( wp_unslash( $_POST['shortcode_style'] ) ) : 'dropdown',
 			'scan_depth'         => isset( $_POST['scan_depth'] ) ? absint( $_POST['scan_depth'] ) : 5,
 			'exclude_admin'      => isset( $_POST['exclude_admin'] ) ? absint( $_POST['exclude_admin'] ) : 1,
 			'cache_translations' => isset( $_POST['cache_translations'] ) ? absint( $_POST['cache_translations'] ) : 1,
@@ -528,6 +534,12 @@ class VW_Translate_Admin {
 		$allowed_positions = array( 'bottom-right', 'bottom-left', 'top-right', 'top-left' );
 		if ( ! in_array( $settings['switcher_position'], $allowed_positions, true ) ) {
 			$settings['switcher_position'] = 'bottom-right';
+		}
+
+		// Validate shortcode style.
+		$allowed_styles = array( 'dropdown', 'pills', 'minimal', 'cards', 'elegant' );
+		if ( ! in_array( $settings['shortcode_style'], $allowed_styles, true ) ) {
+			$settings['shortcode_style'] = 'dropdown';
 		}
 
 		// Validate scan depth (1-10).
@@ -543,8 +555,8 @@ class VW_Translate_Admin {
 			update_option( 'vw_translate_' . $key, $value );
 		}
 
-		// Clear caches.
-		delete_transient( 'vw_translate_translations_cache' );
+		// Clear ALL translation caches.
+		VW_Translate_Frontend::clear_all_translation_caches();
 
 		wp_send_json_success(
 			array(
@@ -589,6 +601,28 @@ class VW_Translate_Admin {
 		wp_send_json_success(
 			array(
 				'message' => __( 'String added successfully.', 'vw-translate' ),
+			)
+		);
+	}
+
+	/**
+	 * AJAX: Clear all translation caches.
+	 *
+	 * @since 1.1.0
+	 */
+	public function ajax_clear_cache() {
+
+		check_ajax_referer( 'vw_translate_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'vw-translate' ) ) );
+		}
+
+		VW_Translate_Frontend::clear_all_translation_caches();
+
+		wp_send_json_success(
+			array(
+				'message' => __( 'All translation caches cleared successfully.', 'vw-translate' ),
 			)
 		);
 	}

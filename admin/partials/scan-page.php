@@ -34,32 +34,33 @@ $stats          = VW_Translate_DB::get_stats();
 
 	<!-- Current Stats -->
 	<div class="vwt-stats-grid">
-		<div class="vwt-stat-card clr-purple">
-			<div class="stat-icon"><span class="dashicons dashicons-editor-textcolor"></span></div>
-			<span class="stat-number"><?php echo esc_html( $stats['total_strings'] ); ?></span>
-			<span class="stat-label"><?php esc_html_e( 'Strings in DB', 'vw-translate' ); ?></span>
-		</div>
-		<div class="vwt-stat-card clr-green">
-			<div class="stat-icon"><span class="dashicons dashicons-translation"></span></div>
-			<span class="stat-number"><?php echo esc_html( $stats['total_translations'] ); ?></span>
-			<span class="stat-label"><?php esc_html_e( 'Translations', 'vw-translate' ); ?></span>
-		</div>
-		<div class="vwt-stat-card clr-blue">
-			<div class="stat-icon"><span class="dashicons dashicons-admin-appearance"></span></div>
-			<span class="stat-number"><?php echo esc_html( $stats['theme_strings'] ); ?></span>
-			<span class="stat-label"><?php esc_html_e( 'Theme Strings', 'vw-translate' ); ?></span>
-		</div>
-		<div class="vwt-stat-card clr-orange">
-			<div class="stat-icon"><span class="dashicons dashicons-admin-plugins"></span></div>
-			<span class="stat-number"><?php echo esc_html( $stats['plugin_strings'] ); ?></span>
-			<span class="stat-label"><?php esc_html_e( 'Plugin Strings', 'vw-translate' ); ?></span>
-		</div>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=vw-translate' ) ); ?>" class="vwt-stat-card-link">
+			<div class="vwt-stat-card clr-purple">
+				<div class="stat-icon"><span class="dashicons dashicons-editor-textcolor"></span></div>
+				<span class="stat-number"><?php echo esc_html( $stats['total_strings'] ); ?></span>
+				<span class="stat-label"><?php esc_html_e( 'Total Strings', 'vw-translate' ); ?></span>
+			</div>
+		</a>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=vw-translate&filter=translated' ) ); ?>" class="vwt-stat-card-link">
+			<div class="vwt-stat-card clr-green">
+				<div class="stat-icon"><span class="dashicons dashicons-translation"></span></div>
+				<span class="stat-number"><?php echo esc_html( $stats['total_translations'] ); ?></span>
+				<span class="stat-label"><?php esc_html_e( 'Translations', 'vw-translate' ); ?></span>
+			</div>
+		</a>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=vw-translate-languages' ) ); ?>" class="vwt-stat-card-link">
+			<div class="vwt-stat-card clr-blue">
+				<div class="stat-icon"><span class="dashicons dashicons-admin-site-alt3"></span></div>
+				<span class="stat-number"><?php echo esc_html( $stats['total_languages'] ); ?></span>
+				<span class="stat-label"><?php esc_html_e( 'Languages', 'vw-translate' ); ?></span>
+			</div>
+		</a>
 	</div>
 
-	<!-- Warning Notice -->
-	<div class="vwt-notice warning">
-		<span class="dashicons dashicons-warning"></span>
-		<?php esc_html_e( 'Important: A new scan will replace all existing strings. Any previous translations will be removed. Make sure to back up translations first if needed.', 'vw-translate' ); ?>
+	<!-- Info Notice -->
+	<div class="vwt-notice info">
+		<span class="dashicons dashicons-info"></span>
+		<?php esc_html_e( 'Scanning will add new strings without removing existing ones. Your translations are always preserved.', 'vw-translate' ); ?>
 	</div>
 
 	<!-- Scan Options Card -->

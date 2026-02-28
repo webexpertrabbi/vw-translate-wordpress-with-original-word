@@ -14,6 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Get current languages.
 $languages           = VW_Translate_DB::get_languages();
 $available_languages = VW_Translate_DB::get_available_languages();
+$stats               = VW_Translate_DB::get_stats();
 
 // Remove already added languages from available list.
 $added_codes = array();
@@ -36,6 +37,31 @@ foreach ( $languages as $lang ) {
 				<?php esc_html_e( 'All Strings', 'vw-translate' ); ?>
 			</a>
 		</div>
+	</div>
+
+	<!-- Stats -->
+	<div class="vwt-stats-grid">
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=vw-translate' ) ); ?>" class="vwt-stat-card-link">
+			<div class="vwt-stat-card clr-purple">
+				<div class="stat-icon"><span class="dashicons dashicons-editor-textcolor"></span></div>
+				<span class="stat-number"><?php echo esc_html( $stats['total_strings'] ); ?></span>
+				<span class="stat-label"><?php esc_html_e( 'Total Strings', 'vw-translate' ); ?></span>
+			</div>
+		</a>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=vw-translate&filter=translated' ) ); ?>" class="vwt-stat-card-link">
+			<div class="vwt-stat-card clr-green">
+				<div class="stat-icon"><span class="dashicons dashicons-translation"></span></div>
+				<span class="stat-number"><?php echo esc_html( $stats['total_translations'] ); ?></span>
+				<span class="stat-label"><?php esc_html_e( 'Translations', 'vw-translate' ); ?></span>
+			</div>
+		</a>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=vw-translate-languages' ) ); ?>" class="vwt-stat-card-link">
+			<div class="vwt-stat-card clr-blue">
+				<div class="stat-icon"><span class="dashicons dashicons-admin-site-alt3"></span></div>
+				<span class="stat-number"><?php echo esc_html( $stats['total_languages'] ); ?></span>
+				<span class="stat-label"><?php esc_html_e( 'Languages', 'vw-translate' ); ?></span>
+			</div>
+		</a>
 	</div>
 
 	<div class="vwt-languages-grid">

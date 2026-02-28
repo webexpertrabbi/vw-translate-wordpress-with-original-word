@@ -125,9 +125,11 @@ add_action( 'widgets_init', 'vw_translate_register_widgets' );
  */
 function vw_translate_language_switcher_shortcode( $atts ) {
 
+	$saved_style = get_option( 'vw_translate_shortcode_style', 'dropdown' );
+
 	$atts = shortcode_atts(
 		array(
-			'style' => 'dropdown',
+			'style' => $saved_style,
 		),
 		$atts,
 		'vw_translate_switcher'

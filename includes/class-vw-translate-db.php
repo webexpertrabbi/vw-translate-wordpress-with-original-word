@@ -251,12 +251,14 @@ class VW_Translate_DB {
 	public static function get_strings( $args = array() ) {
 		global $wpdb;
 
-		$table = self::get_table_name( self::$strings_table );
+		$table              = self::get_table_name( self::$strings_table );
+		$translations_table = self::get_table_name( self::$translations_table );
 
 		$defaults = array(
 			'status'      => 'active',
 			'source_type' => '',
 			'search'      => '',
+			'filter'      => '',
 			'orderby'     => 'id',
 			'order'       => 'DESC',
 			'per_page'    => 20,
@@ -265,21 +267,32 @@ class VW_Translate_DB {
 
 		$args = wp_parse_args( $args, $defaults );
 
+		$join    = '';
+		$select  = "{$table}.*";
 		$where   = array( '1=1' );
 		$prepare = array();
 
+		// Filter: only strings that have at least one translation.
+		if ( 'translated' === $args['filter'] ) {
+			$join    = "INNER JOIN {$translations_table} ON {$translations_table}.string_id = {$table}.id AND {$translations_table}.translated_string != ''";
+			$select  = "DISTINCT {$table}.*";
+		} elseif ( 'untranslated' === $args['filter'] ) {
+			$join    = "LEFT JOIN {$translations_table} ON {$translations_table}.string_id = {$table}.id AND {$translations_table}.translated_string != ''";
+			$where[] = "{$translations_table}.id IS NULL";
+		}
+
 		if ( ! empty( $args['status'] ) ) {
-			$where[]   = 'status = %s';
+			$where[]   = "{$table}.status = %s";
 			$prepare[] = $args['status'];
 		}
 
 		if ( ! empty( $args['source_type'] ) ) {
-			$where[]   = 'source_type = %s';
+			$where[]   = "{$table}.source_type = %s";
 			$prepare[] = $args['source_type'];
 		}
 
 		if ( ! empty( $args['search'] ) ) {
-			$where[]   = 'original_string LIKE %s';
+			$where[]   = "{$table}.original_string LIKE %s";
 			$prepare[] = '%' . $wpdb->esc_like( $args['search'] ) . '%';
 		}
 
@@ -293,7 +306,7 @@ class VW_Translate_DB {
 		$per_page = absint( $args['per_page'] );
 		$offset   = absint( $args['offset'] );
 
-		$sql = "SELECT * FROM {$table} WHERE {$where_clause} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
+		$sql = "SELECT {$select} FROM {$table} {$join} WHERE {$where_clause} ORDER BY {$table}.{$orderby} {$order} LIMIT %d OFFSET %d";
 
 		$prepare[] = $per_page;
 		$prepare[] = $offset;
@@ -319,37 +332,50 @@ class VW_Translate_DB {
 	public static function get_strings_count( $args = array() ) {
 		global $wpdb;
 
-		$table = self::get_table_name( self::$strings_table );
+		$table              = self::get_table_name( self::$strings_table );
+		$translations_table = self::get_table_name( self::$translations_table );
 
 		$defaults = array(
 			'status'      => 'active',
 			'source_type' => '',
 			'search'      => '',
+			'filter'      => '',
 		);
 
 		$args = wp_parse_args( $args, $defaults );
 
+		$join    = '';
+		$count   = "COUNT(*)";
 		$where   = array( '1=1' );
 		$prepare = array();
 
+		// Filter: only strings that have at least one translation.
+		if ( 'translated' === $args['filter'] ) {
+			$join  = "INNER JOIN {$translations_table} ON {$translations_table}.string_id = {$table}.id AND {$translations_table}.translated_string != ''";
+			$count = "COUNT(DISTINCT {$table}.id)";
+		} elseif ( 'untranslated' === $args['filter'] ) {
+			$join    = "LEFT JOIN {$translations_table} ON {$translations_table}.string_id = {$table}.id AND {$translations_table}.translated_string != ''";
+			$where[] = "{$translations_table}.id IS NULL";
+		}
+
 		if ( ! empty( $args['status'] ) ) {
-			$where[]   = 'status = %s';
+			$where[]   = "{$table}.status = %s";
 			$prepare[] = $args['status'];
 		}
 
 		if ( ! empty( $args['source_type'] ) ) {
-			$where[]   = 'source_type = %s';
+			$where[]   = "{$table}.source_type = %s";
 			$prepare[] = $args['source_type'];
 		}
 
 		if ( ! empty( $args['search'] ) ) {
-			$where[]   = 'original_string LIKE %s';
+			$where[]   = "{$table}.original_string LIKE %s";
 			$prepare[] = '%' . $wpdb->esc_like( $args['search'] ) . '%';
 		}
 
 		$where_clause = implode( ' AND ', $where );
 
-		$sql = "SELECT COUNT(*) FROM {$table} WHERE {$where_clause}";
+		$sql = "SELECT {$count} FROM {$table} {$join} WHERE {$where_clause}";
 
 		if ( ! empty( $prepare ) ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
