@@ -266,35 +266,36 @@ $stats              = VW_Translate_DB::get_stats();
 		<div class="vwt-card-header">
 			<h3><span class="dashicons dashicons-search"></span> <?php esc_html_e( 'Scanner Settings', 'vw-translate' ); ?></h3>
 		</div>
-		<div class="vwt-card-body no-pad">
-			<table class="vwt-settings-table">
-				<tr>
-					<th>
-						<label for="vw-translate-scan-depth"><?php esc_html_e( 'Scan Depth', 'vw-translate' ); ?></label>
-						<p class="description"><?php esc_html_e( 'How many levels deep to scan directories (for theme/plugin scan).', 'vw-translate' ); ?></p>
-					</th>
-					<td>
-						<div class="vwt-number-input">
-							<input type="number" id="vw-translate-scan-depth"
-								   value="<?php echo esc_attr( $scan_depth ); ?>"
-								   min="1" max="10" step="1">
-							<span class="vwt-unit"><?php esc_html_e( 'levels', 'vw-translate' ); ?></span>
+		<div class="vwt-card-body">
+			<div class="vwt-settings-inline-grid col-2">
+
+				<!-- Scan Depth -->
+				<div class="vwt-inline-field">
+					<label for="vw-translate-scan-depth"><?php esc_html_e( 'Scan Depth', 'vw-translate' ); ?></label>
+					<p class="description"><?php esc_html_e( 'How many levels deep to scan directories (for theme/plugin scan).', 'vw-translate' ); ?></p>
+					<div class="vwt-number-input" style="margin-top:10px;">
+						<input type="number" id="vw-translate-scan-depth"
+							   value="<?php echo esc_attr( $scan_depth ); ?>"
+							   min="1" max="10" step="1">
+						<span class="vwt-unit"><?php esc_html_e( 'levels', 'vw-translate' ); ?></span>
+					</div>
+				</div>
+
+				<!-- Exclude Admin -->
+				<div class="vwt-inline-field">
+					<div class="vwt-inline-field-header">
+						<div>
+							<label for="vw-translate-exclude-admin"><?php esc_html_e( 'Exclude Admin', 'vw-translate' ); ?></label>
+							<p class="description"><?php esc_html_e( 'Skip admin-only strings during frontend page scan.', 'vw-translate' ); ?></p>
 						</div>
-					</td>
-				</tr>
-				<tr>
-					<th>
-						<label for="vw-translate-exclude-admin"><?php esc_html_e( 'Exclude Admin', 'vw-translate' ); ?></label>
-						<p class="description"><?php esc_html_e( 'Skip admin-only strings during frontend page scan.', 'vw-translate' ); ?></p>
-					</th>
-					<td>
 						<label class="vwt-switch">
 							<input type="checkbox" id="vw-translate-exclude-admin" <?php checked( $exclude_admin ); ?>>
 							<span class="slider"></span>
 						</label>
-					</td>
-				</tr>
-			</table>
+					</div>
+				</div>
+
+			</div>
 		</div>
 	</div>
 
@@ -303,35 +304,36 @@ $stats              = VW_Translate_DB::get_stats();
 		<div class="vwt-card-header">
 			<h3><span class="dashicons dashicons-performance"></span> <?php esc_html_e( 'Performance', 'vw-translate' ); ?></h3>
 		</div>
-		<div class="vwt-card-body no-pad">
-			<table class="vwt-settings-table">
-				<tr>
-					<th>
-						<label for="vw-translate-cache-translations"><?php esc_html_e( 'Cache Translations', 'vw-translate' ); ?></label>
-						<p class="description"><?php esc_html_e( 'Use WordPress transients to cache translation lookups.', 'vw-translate' ); ?></p>
-					</th>
-					<td>
+		<div class="vwt-card-body">
+			<div class="vwt-settings-inline-grid col-2">
+
+				<!-- Cache Translations -->
+				<div class="vwt-inline-field">
+					<div class="vwt-inline-field-header">
+						<div>
+							<label for="vw-translate-cache-translations"><?php esc_html_e( 'Cache Translations', 'vw-translate' ); ?></label>
+							<p class="description"><?php esc_html_e( 'Use WordPress transients to cache translation lookups.', 'vw-translate' ); ?></p>
+						</div>
 						<label class="vwt-switch">
 							<input type="checkbox" id="vw-translate-cache-translations" <?php checked( $cache_translations ); ?>>
 							<span class="slider"></span>
 						</label>
-					</td>
-				</tr>
-				<tr>
-					<th>
-						<label for="vw-translate-cache-duration"><?php esc_html_e( 'Cache Duration', 'vw-translate' ); ?></label>
-						<p class="description"><?php esc_html_e( 'How long to keep cached translations.', 'vw-translate' ); ?></p>
-					</th>
-					<td>
-						<div class="vwt-number-input">
-							<input type="number" id="vw-translate-cache-duration"
-								   value="<?php echo esc_attr( $cache_duration ); ?>"
-								   min="1" max="72" step="1">
-							<span class="vwt-unit"><?php esc_html_e( 'hours', 'vw-translate' ); ?></span>
-						</div>
-					</td>
-				</tr>
-			</table>
+					</div>
+				</div>
+
+				<!-- Cache Duration -->
+				<div class="vwt-inline-field">
+					<label for="vw-translate-cache-duration"><?php esc_html_e( 'Cache Duration', 'vw-translate' ); ?></label>
+					<p class="description"><?php esc_html_e( 'How long to keep cached translations.', 'vw-translate' ); ?></p>
+					<div class="vwt-number-input" style="margin-top:10px;">
+						<input type="number" id="vw-translate-cache-duration"
+							   value="<?php echo esc_attr( $cache_duration ); ?>"
+							   min="1" max="72" step="1">
+						<span class="vwt-unit"><?php esc_html_e( 'hours', 'vw-translate' ); ?></span>
+					</div>
+				</div>
+
+			</div>
 		</div>
 	</div>
 
