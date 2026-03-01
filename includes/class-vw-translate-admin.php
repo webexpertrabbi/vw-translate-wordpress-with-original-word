@@ -537,7 +537,7 @@ class VW_Translate_Admin {
 		}
 
 		// Validate shortcode style.
-		$allowed_styles = array( 'dropdown', 'pills', 'minimal', 'cards', 'elegant' );
+		$allowed_styles = array( 'dropdown', 'pills', 'minimal', 'cards', 'elegant', 'flag-code', 'flag-only' );
 		if ( ! in_array( $settings['shortcode_style'], $allowed_styles, true ) ) {
 			$settings['shortcode_style'] = 'dropdown';
 		}

@@ -77,7 +77,7 @@ foreach ( $languages as $lang ) {
 						<?php foreach ( $languages as $lang ) : ?>
 							<li>
 								<div class="lang-info">
-									<span class="lang-flag-icon"><?php echo esc_html( $lang->flag ); ?></span>
+									<span class="lang-flag-icon"><?php echo VW_Translate_Frontend::get_flag_img_html( $lang->flag, $lang->language_name ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
 									<div class="lang-details">
 										<span class="lang-name"><?php echo esc_html( $lang->language_name ); ?></span>
 										<div class="lang-meta">
@@ -125,61 +125,83 @@ foreach ( $languages as $lang ) {
 
 				<!-- Preset Selector -->
 				<div class="vwt-form-group">
-					<label for="vw-translate-lang-preset">
-						<?php esc_html_e( 'Choose from preset', 'vw-translate' ); ?>
-					</label>
-					<select id="vw-translate-lang-preset">
-						<option value=""><?php esc_html_e( '— Select a language —', 'vw-translate' ); ?></option>
-						<?php foreach ( $available_languages as $code => $lang_data ) : ?>
-							<?php if ( ! in_array( $code, $added_codes, true ) ) : ?>
-								<option value="<?php echo esc_attr( $code ); ?>"
-										data-name="<?php echo esc_attr( $lang_data['name'] ); ?>"
-										data-native="<?php echo esc_attr( $lang_data['native'] ); ?>"
-										data-flag="<?php echo esc_attr( $lang_data['flag'] ); ?>">
-									<?php echo esc_html( $lang_data['flag'] . ' ' . $lang_data['name'] . ' (' . $lang_data['native'] . ')' ); ?>
-								</option>
-							<?php endif; ?>
-						<?php endforeach; ?>
-					</select>
+					<label><?php esc_html_e( 'Choose from preset', 'vw-translate' ); ?></label>
+					<div class="vwt-custom-select" id="vwt-lang-preset-wrap">
+						<button type="button" class="vwt-csd-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="<?php esc_attr_e( 'Select a language', 'vw-translate' ); ?>">
+							<span class="vwt-csd-selected">
+								<span class="vwt-csd-placeholder"><?php esc_html_e( '— Select a language —', 'vw-translate' ); ?></span>
+							</span>
+							<span class="vwt-csd-chevron" aria-hidden="true">&#9660;</span>
+						</button>
+						<div class="vwt-csd-panel" role="listbox">
+							<div class="vwt-csd-search-wrap">
+								<span class="vwt-csd-search-icon">&#128269;</span>
+								<input type="text" class="vwt-csd-search" placeholder="<?php esc_attr_e( 'Search languages…', 'vw-translate' ); ?>" autocomplete="off">
+							</div>
+							<ul class="vwt-csd-list" role="listbox">
+								<?php foreach ( $available_languages as $code => $lang_data ) : ?>
+									<?php if ( ! in_array( $code, $added_codes, true ) ) : ?>
+										<li class="vwt-csd-item"
+											role="option"
+											data-value="<?php echo esc_attr( $code ); ?>"
+											data-name="<?php echo esc_attr( $lang_data['name'] ); ?>"
+											data-native="<?php echo esc_attr( $lang_data['native'] ); ?>"
+											data-flag="<?php echo esc_attr( $lang_data['flag'] ); ?>"
+											data-search="<?php echo esc_attr( strtolower( $code . ' ' . $lang_data['name'] . ' ' . $lang_data['native'] ) ); ?>">
+											<span class="vwt-csd-item-flag">
+												<?php echo VW_Translate_Frontend::get_flag_img_html( $lang_data['flag'], $lang_data['name'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+											</span>
+											<span class="vwt-csd-item-texts">
+												<span class="vwt-csd-item-name"><?php echo esc_html( $lang_data['name'] ); ?></span>
+												<span class="vwt-csd-item-native"><?php echo esc_html( $lang_data['native'] ); ?></span>
+											</span>
+											<span class="vwt-csd-item-code"><?php echo esc_html( strtoupper( $code ) ); ?></span>
+										</li>
+									<?php endif; ?>
+								<?php endforeach; ?>
+							</ul>
+							<div class="vwt-csd-empty" style="display:none;"><?php esc_html_e( 'No languages found.', 'vw-translate' ); ?></div>
+						</div>
+					</div>
 				</div>
 
 				<hr class="vwt-form-divider">
 
-				<div class="vwt-form-group">
-					<label for="vw-translate-lang-code">
-						<?php esc_html_e( 'Language Code', 'vw-translate' ); ?> <span class="required">*</span>
-					</label>
-					<input type="text" id="vw-translate-lang-code" placeholder="<?php esc_attr_e( 'e.g., bn, fr, de', 'vw-translate' ); ?>"
-						   maxlength="10" style="max-width: 160px;">
-				</div>
-
-				<div class="vwt-form-group">
-					<label for="vw-translate-lang-name">
-						<?php esc_html_e( 'Language Name (English)', 'vw-translate' ); ?> <span class="required">*</span>
-					</label>
-					<input type="text" id="vw-translate-lang-name" placeholder="<?php esc_attr_e( 'e.g., Bengali, French', 'vw-translate' ); ?>">
-				</div>
-
-				<div class="vwt-form-group">
-					<label for="vw-translate-lang-native">
-						<?php esc_html_e( 'Native Name', 'vw-translate' ); ?>
-					</label>
-					<input type="text" id="vw-translate-lang-native" placeholder="<?php esc_attr_e( 'e.g., বাংলা, Français', 'vw-translate' ); ?>">
-				</div>
-
-				<div class="vwt-form-group">
-					<label for="vw-translate-lang-flag">
-						<?php esc_html_e( 'Flag Emoji', 'vw-translate' ); ?>
-					</label>
-					<input type="text" id="vw-translate-lang-flag" placeholder="<?php esc_attr_e( 'e.g., 🇧🇩, 🇫🇷', 'vw-translate' ); ?>"
-						   style="max-width: 120px;">
-				</div>
-
-				<div class="vwt-checkbox-row">
+				<div class="vwt-checkbox-row" style="margin-bottom:14px;">
 					<input type="checkbox" id="vw-translate-lang-default">
 					<label for="vw-translate-lang-default">
 						<?php esc_html_e( 'Set as default language', 'vw-translate' ); ?>
 					</label>
+				</div>
+
+				<div class="vwt-form-row">
+					<div class="vwt-form-group">
+						<label for="vw-translate-lang-code">
+							<?php esc_html_e( 'Language Code', 'vw-translate' ); ?> <span class="required">*</span>
+						</label>
+						<input type="text" id="vw-translate-lang-code" placeholder="<?php esc_attr_e( 'e.g., bn, fr, de', 'vw-translate' ); ?>" maxlength="10">
+					</div>
+					<div class="vwt-form-group">
+						<label for="vw-translate-lang-flag">
+							<?php esc_html_e( 'Flag Emoji', 'vw-translate' ); ?>
+						</label>
+						<input type="text" id="vw-translate-lang-flag" placeholder="<?php esc_attr_e( 'e.g., 🇧🇩, 🇫🇷', 'vw-translate' ); ?>">
+					</div>
+				</div>
+
+				<div class="vwt-form-row">
+					<div class="vwt-form-group">
+						<label for="vw-translate-lang-name">
+							<?php esc_html_e( 'Language Name (English)', 'vw-translate' ); ?> <span class="required">*</span>
+						</label>
+						<input type="text" id="vw-translate-lang-name" placeholder="<?php esc_attr_e( 'e.g., Bengali, French', 'vw-translate' ); ?>">
+					</div>
+					<div class="vwt-form-group">
+						<label for="vw-translate-lang-native">
+							<?php esc_html_e( 'Native Name', 'vw-translate' ); ?>
+						</label>
+						<input type="text" id="vw-translate-lang-native" placeholder="<?php esc_attr_e( 'e.g., বাংলা, Français', 'vw-translate' ); ?>">
+					</div>
 				</div>
 
 			</div>

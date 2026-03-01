@@ -80,8 +80,16 @@
 			// Add manual string.
 			$(document).on('click', '#vw-translate-add-string-btn', this.addManualString);
 
-			// Language preset selection.
-			$(document).on('change', '#vw-translate-lang-preset', this.fillLanguagePreset);
+			// Language preset — custom dropdown.
+			$(document).on('click', '.vwt-csd-trigger', VWTranslateAdmin.toggleLangPreset);
+			$(document).on('click', '.vwt-csd-item', VWTranslateAdmin.selectLangPresetItem);
+			$(document).on('input', '.vwt-csd-search', VWTranslateAdmin.filterLangPreset);
+			$(document).on('click', function (e) {
+				if (!$(e.target).closest('.vwt-custom-select').length) {
+					$('.vwt-custom-select').removeClass('vwt-csd-open');
+					$('.vwt-csd-trigger').attr('aria-expanded', 'false');
+				}
+			});
 
 			// Search strings.
 			$(document).on('click', '#vw-translate-search-btn', this.searchStrings);
@@ -796,18 +804,90 @@
 		},
 
 		/**
-		 * Fill language form fields from preset.
+		 * Toggle the custom language preset dropdown open/closed.
 		 */
-		fillLanguagePreset: function () {
-			var $select = $(this);
-			var $option = $select.find(':selected');
+		toggleLangPreset: function (e) {
+			e.stopPropagation();
+			var $trigger = $(this);
+			var $wrap = $trigger.closest('.vwt-custom-select');
+			var isOpen = $wrap.hasClass('vwt-csd-open');
 
-			if ($option.val()) {
-				$('#vw-translate-lang-code').val($option.val());
-				$('#vw-translate-lang-name').val($option.data('name'));
-				$('#vw-translate-lang-native').val($option.data('native'));
-				$('#vw-translate-lang-flag').val($option.data('flag'));
+			// Close any other open selects.
+			$('.vwt-custom-select').not($wrap).removeClass('vwt-csd-open');
+			$('.vwt-csd-trigger').not($trigger).attr('aria-expanded', 'false');
+
+			$wrap.toggleClass('vwt-csd-open', !isOpen);
+			$trigger.attr('aria-expanded', String(!isOpen));
+
+			if (!isOpen) {
+				// Clear search and show all items.
+				var $search = $wrap.find('.vwt-csd-search');
+				$search.val('');
+				$wrap.find('.vwt-csd-item').show();
+				$wrap.find('.vwt-csd-empty').hide();
+				setTimeout(function () { $search.focus(); }, 40);
+				// Scroll selected item into view.
+				var $sel = $wrap.find('.vwt-csd-selected-item');
+				if ($sel.length) {
+					$sel[0].scrollIntoView({ block: 'nearest' });
+				}
 			}
+		},
+
+		/**
+		 * Filter language list by search input.
+		 */
+		filterLangPreset: function () {
+			var q = $(this).val().toLowerCase().trim();
+			var $wrap = $(this).closest('.vwt-custom-select');
+			var $items = $wrap.find('.vwt-csd-item');
+			var visible = 0;
+
+			$items.each(function () {
+				var haystack = $(this).data('search') || '';
+				var match = !q || haystack.indexOf(q) !== -1;
+				$(this).toggle(match);
+				if (match) { visible++; }
+			});
+
+			$wrap.find('.vwt-csd-empty').toggle(visible === 0);
+		},
+
+		/**
+		 * Select a language preset item and fill the form fields.
+		 */
+		selectLangPresetItem: function (e) {
+			e.stopPropagation();
+			var $item = $(this);
+			var $wrap = $item.closest('.vwt-custom-select');
+			var $trigger = $wrap.find('.vwt-csd-trigger');
+
+			// Mark selected.
+			$wrap.find('.vwt-csd-item').removeClass('vwt-csd-selected-item');
+			$item.addClass('vwt-csd-selected-item');
+
+			// Build the trigger display.
+			var flagHtml = $item.find('.vwt-csd-item-flag').html() || '';
+			var name = $item.find('.vwt-csd-item-name').text();
+			var native = $item.find('.vwt-csd-item-native').text();
+			var code = $item.find('.vwt-csd-item-code').text();
+
+			$trigger.find('.vwt-csd-selected').html(
+				'<span class="vwt-csd-item-flag">' + flagHtml + '</span>' +
+				'<span class="vwt-csd-selected-name">' + $('<span>').text(name).html() + '</span>' +
+				'<span class="vwt-csd-selected-native">' + $('<span>').text(native).html() + '</span>' +
+				'<span class="vwt-csd-selected-code">' + $('<span>').text(code).html() + '</span>'
+			);
+
+			// Fill form fields.
+			$('#vw-translate-lang-code').val($item.data('value'));
+			$('#vw-translate-lang-name').val($item.data('name'));
+			$('#vw-translate-lang-native').val($item.data('native'));
+			$('#vw-translate-lang-flag').val($item.data('flag'));
+
+			// Close dropdown.
+			$wrap.removeClass('vwt-csd-open');
+			$trigger.attr('aria-expanded', 'false');
 		},
 
 		/**

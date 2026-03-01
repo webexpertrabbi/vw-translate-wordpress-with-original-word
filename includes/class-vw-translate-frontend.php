@@ -549,6 +549,61 @@ class VW_Translate_Frontend {
 	}
 
 	/**
+	 * Convert a flag emoji (e.g. 🇺🇸) to its ISO 3166-1 alpha-2 country code (e.g. "us").
+	 *
+	 * Unicode Regional Indicator Symbols A–Z start at code point 0x1F1E6.
+	 * Windows does not render Unicode flag emoji as actual flag images, so we
+	 * derive the ISO code and serve a real PNG from flagcdn.com instead.
+	 *
+	 * @since  1.2.0
+	 * @param  string $emoji Flag emoji (e.g. 🇺🇸).
+	 * @return string Lowercase 2-letter country code, or empty string on failure.
+	 */
+	private static function flag_emoji_to_iso( $emoji ) {
+		if ( empty( $emoji ) ) {
+			return '';
+		}
+		$code = '';
+		$len  = mb_strlen( $emoji );
+		for ( $i = 0; $i < $len; $i++ ) {
+			$ord = mb_ord( mb_substr( $emoji, $i, 1 ) );
+			if ( $ord >= 0x1F1E6 && $ord <= 0x1F1FF ) {
+				$code .= chr( $ord - 0x1F1E6 + ord( 'A' ) );
+			}
+		}
+		return strtolower( $code );
+	}
+
+	/**
+	 * Return a flag <img> HTML string for the given flag emoji.
+	 *
+	 * Serves a real PNG image from flagcdn.com instead of relying on Unicode
+	 * emoji (which Windows does not display as flag images). Falls back to the
+	 * raw emoji wrapped in a <span> when the ISO code cannot be extracted.
+	 *
+	 * The returned string is already safely escaped and can be echoed directly.
+	 *
+	 * @since  1.2.0
+	 * @param  string $flag_emoji Flag emoji stored in the DB (e.g. 🇺🇸).
+	 * @param  string $alt_text   Accessible alt text (language name).
+	 * @return string HTML <img> tag or fallback <span>.
+	 */
+	public static function get_flag_img_html( $flag_emoji, $alt_text = '' ) {
+		$iso = self::flag_emoji_to_iso( $flag_emoji );
+		if ( empty( $iso ) ) {
+			return ! empty( $flag_emoji )
+				? '<span class="vwt-flag-emoji" aria-hidden="true">' . esc_html( $flag_emoji ) . '</span>'
+				: '<span class="vwt-flag-globe" aria-hidden="true">&#127760;</span>';
+		}
+		return '<img class="vwt-flag-img"'
+			. ' src="https://flagcdn.com/w40/' . esc_attr( $iso ) . '.png"'
+			. ' srcset="https://flagcdn.com/w80/' . esc_attr( $iso ) . '.png 2x"'
+			. ' width="20" height="15"'
+			. ' alt="' . esc_attr( $alt_text ) . '"'
+			. ' loading="lazy">';
+	}
+
+	/**
 	 * Generate language switcher HTML.
 	 *
 	 * @since 1.0.0
@@ -597,6 +652,14 @@ class VW_Translate_Frontend {
 
 			case 'flags':
 				self::render_flags_switcher( $languages, $current_lang, $current_url );
+				break;
+
+			case 'flag-code':
+				self::render_flag_code_switcher( $languages, $current_lang, $current_url );
+				break;
+
+			case 'flag-only':
+				self::render_flag_only_switcher( $languages, $current_lang, $current_url );
 				break;
 
 			case 'floating':
@@ -665,7 +728,7 @@ class VW_Translate_Frontend {
 				   hreflang="<?php echo esc_attr( $lang->language_code ); ?>"
 				   class="<?php echo $current_lang === $lang->language_code ? 'vwt-active' : ''; ?>">
 					<?php if ( ! empty( $lang->flag ) ) : ?>
-						<span class="vwt-flag"><?php echo esc_html( $lang->flag ); ?></span>
+						<span class="vwt-flag"><?php echo self::get_flag_img_html( $lang->flag, $lang->language_name ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
 					<?php endif; ?>
 					<?php echo esc_html( ! empty( $lang->native_name ) ? $lang->native_name : $lang->language_name ); ?>
 					<span class="vwt-code"><?php echo esc_html( strtoupper( $lang->language_code ) ); ?></span>
@@ -691,7 +754,7 @@ class VW_Translate_Frontend {
 				   hreflang="<?php echo esc_attr( $lang->language_code ); ?>"
 				   class="<?php echo $current_lang === $lang->language_code ? 'vwt-active' : ''; ?>">
 					<?php if ( ! empty( $lang->flag ) ) : ?>
-						<span class="vwt-flag"><?php echo esc_html( $lang->flag ); ?></span>
+						<span class="vwt-flag"><?php echo self::get_flag_img_html( $lang->flag, $lang->language_name ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
 					<?php endif; ?>
 					<?php echo esc_html( ! empty( $lang->native_name ) ? $lang->native_name : $lang->language_name ); ?>
 				</a>
@@ -713,7 +776,7 @@ class VW_Translate_Frontend {
 				   hreflang="<?php echo esc_attr( $lang->language_code ); ?>"
 				   class="<?php echo $current_lang === $lang->language_code ? 'vwt-active' : ''; ?>">
 					<?php if ( ! empty( $lang->flag ) ) : ?>
-						<span class="vwt-flag"><?php echo esc_html( $lang->flag ); ?></span>
+						<span class="vwt-flag"><?php echo self::get_flag_img_html( $lang->flag, $lang->language_name ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
 					<?php endif; ?>
 					<span class="vwt-name"><?php echo esc_html( ! empty( $lang->native_name ) ? $lang->native_name : $lang->language_name ); ?></span>
 					<span class="vwt-code"><?php echo esc_html( strtoupper( $lang->language_code ) ); ?></span>
@@ -743,7 +806,13 @@ class VW_Translate_Frontend {
 		<div class="vwt-ls vwt-style-elegant" id="<?php echo esc_attr( $uid ); ?>">
 			<button type="button" class="vwt-elegant-toggle" aria-expanded="false" aria-haspopup="listbox">
 				<span class="vwt-flag">
-					<?php echo esc_html( ( $current_lang_obj && ! empty( $current_lang_obj->flag ) ) ? $current_lang_obj->flag : '&#127760;' ); ?>
+					<?php
+					if ( $current_lang_obj && ! empty( $current_lang_obj->flag ) ) {
+						echo self::get_flag_img_html( $current_lang_obj->flag, $current_lang_obj->language_name ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					} else {
+						echo '<span class="vwt-flag-globe" aria-hidden="true">&#127760;</span>';
+					}
+					?>
 				</span>
 				<span class="vwt-name">
 					<?php
@@ -761,7 +830,7 @@ class VW_Translate_Frontend {
 					   class="vwt-elegant-item <?php echo $current_lang === $lang->language_code ? 'vwt-active' : ''; ?>"
 					   role="option" aria-selected="<?php echo $current_lang === $lang->language_code ? 'true' : 'false'; ?>">
 						<?php if ( ! empty( $lang->flag ) ) : ?>
-							<span class="vwt-flag"><?php echo esc_html( $lang->flag ); ?></span>
+						<span class="vwt-flag"><?php echo self::get_flag_img_html( $lang->flag, $lang->language_name ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
 						<?php endif; ?>
 						<span><?php echo esc_html( ! empty( $lang->native_name ) ? $lang->native_name : $lang->language_name ); ?></span>
 						<span class="vwt-check" aria-hidden="true">&#10003;</span>
@@ -809,7 +878,7 @@ class VW_Translate_Frontend {
 					   hreflang="<?php echo esc_attr( $lang->language_code ); ?>">
 						<?php
 						if ( ! empty( $lang->flag ) ) {
-							echo '<span class="vw-translate-flag">' . esc_html( $lang->flag ) . '</span> ';
+							echo '<span class="vw-translate-flag">' . self::get_flag_img_html( $lang->flag, $lang->language_name ) . '</span> '; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 						}
 						echo esc_html( ! empty( $lang->native_name ) ? $lang->native_name : $lang->language_name );
 						?>
@@ -836,7 +905,13 @@ class VW_Translate_Frontend {
 				   hreflang="<?php echo esc_attr( $lang->language_code ); ?>"
 				   title="<?php echo esc_attr( ! empty( $lang->native_name ) ? $lang->native_name : $lang->language_name ); ?>"
 				   class="vw-translate-flag-link <?php echo $current_lang === $lang->language_code ? 'vw-translate-active' : ''; ?>">
-					<?php echo esc_html( ! empty( $lang->flag ) ? $lang->flag : $lang->language_code ); ?>
+					<?php
+					if ( ! empty( $lang->flag ) ) {
+						echo self::get_flag_img_html( $lang->flag, $lang->language_name ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					} else {
+						echo esc_html( strtoupper( $lang->language_code ) );
+					}
+					?>
 				</a>
 			<?php endforeach; ?>
 		</div>
@@ -867,9 +942,9 @@ class VW_Translate_Frontend {
 				<span class="vw-translate-current-flag">
 					<?php
 					if ( $current_lang_obj && ! empty( $current_lang_obj->flag ) ) {
-						echo esc_html( $current_lang_obj->flag );
+						echo self::get_flag_img_html( $current_lang_obj->flag, $current_lang_obj->language_name ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 					} else {
-						echo '🌐';
+						echo '<span class="vwt-flag-globe" aria-hidden="true">&#127760;</span>';
 					}
 					?>
 				</span>
@@ -888,7 +963,7 @@ class VW_Translate_Frontend {
 					   class="vw-translate-floating-item <?php echo $current_lang === $lang->language_code ? 'vw-translate-active' : ''; ?>">
 						<?php
 						if ( ! empty( $lang->flag ) ) {
-							echo '<span class="vw-translate-flag">' . esc_html( $lang->flag ) . '</span> ';
+							echo '<span class="vw-translate-flag">' . self::get_flag_img_html( $lang->flag, $lang->language_name ) . '</span> '; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 						}
 						echo esc_html( ! empty( $lang->native_name ) ? $lang->native_name : $lang->language_name );
 						?>
@@ -914,6 +989,58 @@ class VW_Translate_Frontend {
 			}
 		})();
 		</script>
+	/**
+	 * Render flag+code style switcher (flag image + uppercase language code).
+	 *
+	 * @since 1.2.0
+	 * @param array  $languages    Available languages.
+	 * @param string $current_lang Current language code.
+	 * @param string $current_url  Current page URL.
+	 */
+	private static function render_flag_code_switcher( $languages, $current_lang, $current_url ) {
+		?>
+		<div class="vwt-ls vwt-style-flag-code">
+			<?php foreach ( $languages as $lang ) : ?>
+				<a href="<?php echo esc_url( self::build_lang_url( $current_url, $lang->language_code ) ); ?>"
+				   hreflang="<?php echo esc_attr( $lang->language_code ); ?>"
+				   title="<?php echo esc_attr( ! empty( $lang->native_name ) ? $lang->native_name : $lang->language_name ); ?>"
+				   class="<?php echo $current_lang === $lang->language_code ? 'vwt-active' : ''; ?>">
+					<?php if ( ! empty( $lang->flag ) ) : ?>
+						<span class="vwt-flag"><?php echo self::get_flag_img_html( $lang->flag, $lang->language_name ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+					<?php endif; ?>
+					<span class="vwt-code"><?php echo esc_html( strtoupper( $lang->language_code ) ); ?></span>
+				</a>
+			<?php endforeach; ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render flag-only style switcher (flag images, no text).
+	 *
+	 * @since 1.2.0
+	 * @param array  $languages    Available languages.
+	 * @param string $current_lang Current language code.
+	 * @param string $current_url  Current page URL.
+	 */
+	private static function render_flag_only_switcher( $languages, $current_lang, $current_url ) {
+		?>
+		<div class="vwt-ls vwt-style-flag-only">
+			<?php foreach ( $languages as $lang ) : ?>
+				<a href="<?php echo esc_url( self::build_lang_url( $current_url, $lang->language_code ) ); ?>"
+				   hreflang="<?php echo esc_attr( $lang->language_code ); ?>"
+				   title="<?php echo esc_attr( ! empty( $lang->native_name ) ? $lang->native_name : $lang->language_name ); ?>"
+				   class="<?php echo $current_lang === $lang->language_code ? 'vwt-active' : ''; ?>">
+					<?php
+					if ( ! empty( $lang->flag ) ) {
+						echo self::get_flag_img_html( $lang->flag, $lang->language_name ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					} else {
+						echo '<span class="vwt-flag-globe" aria-hidden="true">&#127760;</span>';
+					}
+					?>
+				</a>
+			<?php endforeach; ?>
+		</div>
 		<?php
 	}
 }

@@ -3,7 +3,7 @@
  * VW Translate WordPress with Original Word
  *
  * @package           VW_Translate
- * @author            Developer
+ * @author            VendWeave
  * @copyright         2026
  * @license           GPL-2.0-or-later
  *
@@ -14,8 +14,10 @@
  * Version:           1.0.0
  * Requires at least: 5.6
  * Requires PHP:      7.4
- * Author:            Developer
- * Author URI:        https://developer.com/
+ * Author:            VendWeave
+ * Author URI:        https://vendweave.com/
+ * Developer:         WebExpert Rabbi
+ * Developer URI:     https://webexpertrabbi.com/
  * Text Domain:       vw-translate
  * Domain Path:       /languages
  * License:           GPL v2 or later

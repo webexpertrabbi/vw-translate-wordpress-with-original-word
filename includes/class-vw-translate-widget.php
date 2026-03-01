@@ -97,8 +97,26 @@ class VW_Translate_Widget extends WP_Widget {
 				<option value="list" <?php selected( $style, 'list' ); ?>>
 					<?php esc_html_e( 'List', 'vw-translate' ); ?>
 				</option>
+				<option value="pills" <?php selected( $style, 'pills' ); ?>>
+					<?php esc_html_e( 'Pills', 'vw-translate' ); ?>
+				</option>
+				<option value="minimal" <?php selected( $style, 'minimal' ); ?>>
+					<?php esc_html_e( 'Minimal', 'vw-translate' ); ?>
+				</option>
+				<option value="cards" <?php selected( $style, 'cards' ); ?>>
+					<?php esc_html_e( 'Cards', 'vw-translate' ); ?>
+				</option>
+				<option value="elegant" <?php selected( $style, 'elegant' ); ?>>
+					<?php esc_html_e( 'Elegant', 'vw-translate' ); ?>
+				</option>
+				<option value="flag-code" <?php selected( $style, 'flag-code' ); ?>>
+					<?php esc_html_e( 'Flag + Code', 'vw-translate' ); ?>
+				</option>
 				<option value="flags" <?php selected( $style, 'flags' ); ?>>
 					<?php esc_html_e( 'Flags Only', 'vw-translate' ); ?>
+				</option>
+				<option value="flag-only" <?php selected( $style, 'flag-only' ); ?>>
+					<?php esc_html_e( 'Flag Images Only', 'vw-translate' ); ?>
 				</option>
 			</select>
 		</p>
@@ -120,7 +138,7 @@ class VW_Translate_Widget extends WP_Widget {
 		$instance['style'] = ! empty( $new_instance['style'] ) ? sanitize_text_field( $new_instance['style'] ) : 'dropdown';
 
 		// Validate style value.
-		$allowed_styles = array( 'dropdown', 'list', 'flags' );
+		$allowed_styles = array( 'dropdown', 'list', 'pills', 'minimal', 'cards', 'elegant', 'flag-code', 'flags', 'flag-only' );
 		if ( ! in_array( $instance['style'], $allowed_styles, true ) ) {
 			$instance['style'] = 'dropdown';
 		}

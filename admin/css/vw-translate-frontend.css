@@ -48,7 +48,7 @@ box-shadow: 0 0 0 3px rgba(102,126,234,.15);
 ═══════════════════════════════════════════════════════════ */
 .vwt-ls.vwt-style-pills {
 display: inline-flex;
-gap: 4px;
+gap: 8px;
 flex-wrap: wrap;
 align-items: center;
 background: #f2f4f7;
@@ -73,7 +73,16 @@ background: #fff;
 color: #344054;
 box-shadow: 0 1px 6px rgba(0,0,0,.12);
 }
-.vwt-ls.vwt-style-pills .vwt-flag { font-size: 16px; }
+.vwt-ls.vwt-style-pills .vwt-flag { font-size: 16px; line-height: 1; display: inline-flex; align-items: center; }
+.vwt-ls .vwt-flag-img {
+display: inline-block;
+width: 22px;
+height: 16px;
+object-fit: cover;
+border-radius: 3px;
+box-shadow: 0 1px 3px rgba(0,0,0,.20);
+vertical-align: middle;
+}
 .vwt-ls.vwt-style-pills .vwt-code {
 font-size: 10px;
 font-weight: 700;
@@ -104,7 +113,7 @@ transition: all .15s;
 .vwt-ls.vwt-style-minimal a:hover { color: #344054; }
 .vwt-ls.vwt-style-minimal a.vwt-active { color: #667eea; border-bottom-color: #667eea; }
 .vwt-ls.vwt-style-minimal .vwt-sep { width: 1px; height: 14px; background: #e4e7ec; flex-shrink: 0; }
-.vwt-ls.vwt-style-minimal .vwt-flag { font-size: 15px; }
+.vwt-ls.vwt-style-minimal .vwt-flag { font-size: 15px; line-height: 1; display: inline-flex; align-items: center; }
 
 /* ═══════════════════════════════════════════════════════════
    STYLE 4 — CARDS  (flag + name blocks)
@@ -264,3 +273,83 @@ border-bottom: 1px solid #f0f0f0;
 .vw-translate-floating-item:hover { background: #f5f5f5; color: #333; }
 .vw-translate-floating-item.vw-translate-active { background: #f0f6fc; font-weight: 600; color: #0073aa; }
 .vw-translate-flag { margin-right: 5px; }
+
+/* ═══════════════════════════════════════════════════════════
+   STYLE 6 — FLAG-CODE  (flag image + language code only)
+═══════════════════════════════════════════════════════════ */
+.vwt-ls.vwt-style-flag-code {
+display: inline-flex;
+gap: 10px;
+align-items: center;
+flex-wrap: wrap;
+}
+.vwt-ls.vwt-style-flag-code a {
+display: inline-flex;
+align-items: center;
+gap: 6px;
+padding: 6px 12px;
+border-radius: 8px;
+border: 1.5px solid #e4e7ec;
+background: #fff;
+font-size: 12px;
+font-weight: 700;
+letter-spacing: .6px;
+text-transform: uppercase;
+color: #667085;
+transition: all .15s;
+white-space: nowrap;
+box-shadow: 0 1px 2px rgba(0,0,0,.05);
+}
+.vwt-ls.vwt-style-flag-code a:hover {
+border-color: #98a2b3;
+color: #344054;
+box-shadow: 0 2px 6px rgba(0,0,0,.10);
+}
+.vwt-ls.vwt-style-flag-code a.vwt-active {
+border-color: #667eea;
+background: #f0f3ff;
+color: #667eea;
+box-shadow: 0 2px 8px rgba(102,126,234,.18);
+}
+.vwt-ls.vwt-style-flag-code .vwt-flag-img {
+width: 24px;
+height: 18px;
+border-radius: 3px;
+box-shadow: 0 1px 3px rgba(0,0,0,.18);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STYLE 7 — FLAG-ONLY  (flag images, no text at all)
+═══════════════════════════════════════════════════════════ */
+.vwt-ls.vwt-style-flag-only {
+display: inline-flex;
+gap: 8px;
+align-items: center;
+flex-wrap: wrap;
+}
+.vwt-ls.vwt-style-flag-only a {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+padding: 4px;
+border-radius: 6px;
+border: 2.5px solid transparent;
+transition: all .18s;
+opacity: .70;
+}
+.vwt-ls.vwt-style-flag-only a:hover {
+opacity: 1;
+transform: scale(1.12);
+border-color: #d0d5dd;
+}
+.vwt-ls.vwt-style-flag-only a.vwt-active {
+border-color: #667eea;
+opacity: 1;
+box-shadow: 0 2px 10px rgba(102,126,234,.30);
+}
+.vwt-ls.vwt-style-flag-only .vwt-flag-img {
+width: 34px;
+height: 26px;
+border-radius: 4px;
+box-shadow: 0 1px 4px rgba(0,0,0,.22);
+}

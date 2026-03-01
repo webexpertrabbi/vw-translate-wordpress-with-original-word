@@ -11,18 +11,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// Get current options.
-$options            = get_option( 'vw_translate_settings', array() );
-$enable_url_param   = isset( $options['enable_url_param'] )   ? (bool) $options['enable_url_param']   : true;
-$enable_cookie      = isset( $options['enable_cookie'] )      ? (bool) $options['enable_cookie']      : true;
-$cookie_duration    = isset( $options['cookie_duration'] )     ? (int) $options['cookie_duration']     : 30;
-$enable_switcher    = isset( $options['enable_switcher'] )     ? (bool) $options['enable_switcher']    : true;
-$switcher_position  = isset( $options['switcher_position'] )  ? $options['switcher_position']         : 'bottom-right';
-$scan_depth         = isset( $options['scan_depth'] )         ? (int) $options['scan_depth']          : 3;
-$exclude_admin      = isset( $options['exclude_admin'] )      ? (bool) $options['exclude_admin']      : true;
-$cache_translations = isset( $options['cache_translations'] ) ? (bool) $options['cache_translations'] : true;
-$cache_duration     = isset( $options['cache_duration'] )     ? (int) $options['cache_duration']      : 12;
-$shortcode_style    = get_option( 'vw_translate_shortcode_style', 'dropdown' );
+// Get current options — each setting is stored as its own wp_option key.
+$enable_url_param   = (bool) get_option( 'vw_translate_enable_url_param',   1 );
+$enable_cookie      = (bool) get_option( 'vw_translate_enable_cookie',      1 );
+$cookie_duration    = (int)  get_option( 'vw_translate_cookie_duration',    30 );
+$enable_switcher    = (bool) get_option( 'vw_translate_enable_switcher',    1 );
+$switcher_position  =        get_option( 'vw_translate_switcher_position',  'bottom-right' );
+$scan_depth         = (int)  get_option( 'vw_translate_scan_depth',         3 );
+$exclude_admin      = (bool) get_option( 'vw_translate_exclude_admin',      1 );
+$cache_translations = (bool) get_option( 'vw_translate_cache_translations', 1 );
+$cache_duration     = (int)  get_option( 'vw_translate_cache_duration',     12 );
+$shortcode_style    =        get_option( 'vw_translate_shortcode_style',    'dropdown' );
 $stats              = VW_Translate_DB::get_stats();
 ?>
 
@@ -66,47 +65,50 @@ $stats              = VW_Translate_DB::get_stats();
 		<div class="vwt-card-header">
 			<h3><span class="dashicons dashicons-admin-network"></span> <?php esc_html_e( 'Translation Detection', 'vw-translate' ); ?></h3>
 		</div>
-		<div class="vwt-card-body no-pad">
-			<table class="vwt-settings-table">
-				<tr>
-					<th>
-						<label for="vw-translate-enable-url-param"><?php esc_html_e( 'URL Parameter', 'vw-translate' ); ?></label>
-						<p class="description"><?php esc_html_e( 'Allow switching language via ?lang=CODE in the URL.', 'vw-translate' ); ?></p>
-					</th>
-					<td>
+		<div class="vwt-card-body">
+			<div class="vwt-settings-inline-grid col-3">
+
+				<!-- URL Parameter -->
+				<div class="vwt-inline-field">
+					<div class="vwt-inline-field-header">
+						<div>
+							<label for="vw-translate-enable-url-param"><?php esc_html_e( 'URL Parameter', 'vw-translate' ); ?></label>
+							<p class="description"><?php esc_html_e( 'Allow switching language via ?lang=CODE in the URL.', 'vw-translate' ); ?></p>
+						</div>
 						<label class="vwt-switch">
 							<input type="checkbox" id="vw-translate-enable-url-param" <?php checked( $enable_url_param ); ?>>
 							<span class="slider"></span>
 						</label>
-					</td>
-				</tr>
-				<tr>
-					<th>
-						<label for="vw-translate-enable-cookie"><?php esc_html_e( 'Remember Language', 'vw-translate' ); ?></label>
-						<p class="description"><?php esc_html_e( 'Store the visitor\'s language preference in a cookie.', 'vw-translate' ); ?></p>
-					</th>
-					<td>
+					</div>
+				</div>
+
+				<!-- Remember Language -->
+				<div class="vwt-inline-field">
+					<div class="vwt-inline-field-header">
+						<div>
+							<label for="vw-translate-enable-cookie"><?php esc_html_e( 'Remember Language', 'vw-translate' ); ?></label>
+							<p class="description"><?php esc_html_e( 'Store the visitor\'s language preference in a cookie.', 'vw-translate' ); ?></p>
+						</div>
 						<label class="vwt-switch">
 							<input type="checkbox" id="vw-translate-enable-cookie" <?php checked( $enable_cookie ); ?>>
 							<span class="slider"></span>
 						</label>
-					</td>
-				</tr>
-				<tr>
-					<th>
-						<label for="vw-translate-cookie-duration"><?php esc_html_e( 'Cookie Duration', 'vw-translate' ); ?></label>
-						<p class="description"><?php esc_html_e( 'Number of days to keep the language preference.', 'vw-translate' ); ?></p>
-					</th>
-					<td>
-						<div class="vwt-number-input">
-							<input type="number" id="vw-translate-cookie-duration"
-								   value="<?php echo esc_attr( $cookie_duration ); ?>"
-								   min="1" max="365" step="1">
-							<span class="vwt-unit"><?php esc_html_e( 'days', 'vw-translate' ); ?></span>
-						</div>
-					</td>
-				</tr>
-			</table>
+					</div>
+				</div>
+
+				<!-- Cookie Duration -->
+				<div class="vwt-inline-field">
+					<label for="vw-translate-cookie-duration"><?php esc_html_e( 'Cookie Duration', 'vw-translate' ); ?></label>
+					<p class="description"><?php esc_html_e( 'Number of days to keep the language preference.', 'vw-translate' ); ?></p>
+					<div class="vwt-number-input" style="margin-top:10px;">
+						<input type="number" id="vw-translate-cookie-duration"
+							   value="<?php echo esc_attr( $cookie_duration ); ?>"
+							   min="1" max="365" step="1">
+						<span class="vwt-unit"><?php esc_html_e( 'days', 'vw-translate' ); ?></span>
+					</div>
+				</div>
+
+			</div>
 		</div>
 	</div>
 
@@ -115,35 +117,36 @@ $stats              = VW_Translate_DB::get_stats();
 		<div class="vwt-card-header">
 			<h3><span class="dashicons dashicons-translation"></span> <?php esc_html_e( 'Language Switcher', 'vw-translate' ); ?></h3>
 		</div>
-		<div class="vwt-card-body no-pad">
-			<table class="vwt-settings-table">
-				<tr>
-					<th>
-						<label for="vw-translate-enable-switcher"><?php esc_html_e( 'Floating Switcher', 'vw-translate' ); ?></label>
-						<p class="description"><?php esc_html_e( 'Display a floating language switcher on the frontend.', 'vw-translate' ); ?></p>
-					</th>
-					<td>
+		<div class="vwt-card-body">
+			<div class="vwt-settings-inline-grid col-2">
+
+				<!-- Floating Switcher -->
+				<div class="vwt-inline-field">
+					<div class="vwt-inline-field-header">
+						<div>
+							<label for="vw-translate-enable-switcher"><?php esc_html_e( 'Floating Switcher', 'vw-translate' ); ?></label>
+							<p class="description"><?php esc_html_e( 'Display a floating language switcher on the frontend.', 'vw-translate' ); ?></p>
+						</div>
 						<label class="vwt-switch">
 							<input type="checkbox" id="vw-translate-enable-switcher" <?php checked( $enable_switcher ); ?>>
 							<span class="slider"></span>
 						</label>
-					</td>
-				</tr>
-				<tr>
-					<th>
-						<label for="vw-translate-switcher-position"><?php esc_html_e( 'Switcher Position', 'vw-translate' ); ?></label>
-						<p class="description"><?php esc_html_e( 'Where to display the floating switcher.', 'vw-translate' ); ?></p>
-					</th>
-					<td>
-						<select id="vw-translate-switcher-position">
-							<option value="bottom-right" <?php selected( $switcher_position, 'bottom-right' ); ?>><?php esc_html_e( 'Bottom Right', 'vw-translate' ); ?></option>
-							<option value="bottom-left" <?php selected( $switcher_position, 'bottom-left' ); ?>><?php esc_html_e( 'Bottom Left', 'vw-translate' ); ?></option>
-							<option value="top-right" <?php selected( $switcher_position, 'top-right' ); ?>><?php esc_html_e( 'Top Right', 'vw-translate' ); ?></option>
-							<option value="top-left" <?php selected( $switcher_position, 'top-left' ); ?>><?php esc_html_e( 'Top Left', 'vw-translate' ); ?></option>
-						</select>
-					</td>
-				</tr>
-			</table>
+					</div>
+				</div>
+
+				<!-- Switcher Position -->
+				<div class="vwt-inline-field">
+					<label for="vw-translate-switcher-position"><?php esc_html_e( 'Switcher Position', 'vw-translate' ); ?></label>
+					<p class="description"><?php esc_html_e( 'Where to display the floating switcher.', 'vw-translate' ); ?></p>
+					<select id="vw-translate-switcher-position" style="margin-top:10px; width:100%;">
+						<option value="bottom-right" <?php selected( $switcher_position, 'bottom-right' ); ?>><?php esc_html_e( 'Bottom Right', 'vw-translate' ); ?></option>
+						<option value="bottom-left" <?php selected( $switcher_position, 'bottom-left' ); ?>><?php esc_html_e( 'Bottom Left', 'vw-translate' ); ?></option>
+						<option value="top-right" <?php selected( $switcher_position, 'top-right' ); ?>><?php esc_html_e( 'Top Right', 'vw-translate' ); ?></option>
+						<option value="top-left" <?php selected( $switcher_position, 'top-left' ); ?>><?php esc_html_e( 'Top Left', 'vw-translate' ); ?></option>
+					</select>
+				</div>
+
+			</div>
 		</div>
 	</div>
 
@@ -223,6 +226,34 @@ $stats              = VW_Translate_DB::get_stats();
 							<div class="vwt-prev-elegant">&#127760; English</div>
 						</div>
 						<span class="vwt-style-label-text"><?php esc_html_e( 'Elegant', 'vw-translate' ); ?></span>
+					</div>
+				</label>
+
+				<!-- Flag + Code -->
+				<label class="vwt-style-option">
+					<input type="radio" name="shortcode_style" value="flag-code" <?php checked( $shortcode_style, 'flag-code' ); ?>>
+					<div class="vwt-style-card">
+						<div class="vwt-style-preview">
+							<div class="vwt-prev-pills" style="background:none;padding:0;gap:8px;">
+								<span class="act" style="border:1.5px solid #667eea;padding:4px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:5px;"><img src="https://flagcdn.com/w20/us.png" width="18" height="13" style="border-radius:2px;"> EN</span>
+								<span style="border:1.5px solid #e4e7ec;padding:4px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:5px;"><img src="https://flagcdn.com/w20/pl.png" width="18" height="13" style="border-radius:2px;"> PL</span>
+							</div>
+						</div>
+						<span class="vwt-style-label-text"><?php esc_html_e( 'Flag + Code', 'vw-translate' ); ?></span>
+					</div>
+				</label>
+
+				<!-- Flag Only -->
+				<label class="vwt-style-option">
+					<input type="radio" name="shortcode_style" value="flag-only" <?php checked( $shortcode_style, 'flag-only' ); ?>>
+					<div class="vwt-style-card">
+						<div class="vwt-style-preview">
+							<div style="display:inline-flex;align-items:center;gap:8px;">
+								<span style="border:2.5px solid #667eea;padding:3px;border-radius:5px;display:inline-flex;"><img src="https://flagcdn.com/w40/us.png" width="28" height="21" style="border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span>
+								<span style="border:2.5px solid transparent;padding:3px;border-radius:5px;display:inline-flex;opacity:.65;"><img src="https://flagcdn.com/w40/pl.png" width="28" height="21" style="border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.2);"></span>
+							</div>
+						</div>
+						<span class="vwt-style-label-text"><?php esc_html_e( 'Flag Only', 'vw-translate' ); ?></span>
 					</div>
 				</label>
 

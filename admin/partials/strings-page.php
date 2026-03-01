@@ -190,9 +190,9 @@ $stats     = VW_Translate_DB::get_stats();
 											  title="<?php echo esc_attr( $lang->language_name ); ?>">
 											<?php
 											if ( ! empty( $lang->flag ) ) {
-												echo esc_html( $lang->flag ) . ' ';
+												echo VW_Translate_Frontend::get_flag_img_html( $lang->flag, $lang->language_name ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 											}
-											echo esc_html( strtoupper( $lang->language_code ) );
+											echo ' ' . esc_html( strtoupper( $lang->language_code ) );
 											?>
 										</span>
 									<?php endforeach; ?>
