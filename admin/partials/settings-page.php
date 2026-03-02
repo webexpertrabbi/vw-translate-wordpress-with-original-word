@@ -169,7 +169,7 @@ $stats              = VW_Translate_DB::get_stats();
 					<input type="radio" name="shortcode_style" value="dropdown" <?php checked( $shortcode_style, 'dropdown' ); ?>>
 					<div class="vwt-style-card">
 						<div class="vwt-style-preview">
-							<div class="vwt-prev-dropdown">&#127760; English</div>
+						<div class="vwt-prev-dropdown"><img src="https://flagcdn.com/w20/us.png" width="18" height="13" style="border-radius:2px;vertical-align:middle;margin-right:4px;"> English</div>
 						</div>
 						<span class="vwt-style-label-text"><?php esc_html_e( 'Dropdown', 'vw-translate' ); ?></span>
 					</div>
@@ -181,8 +181,8 @@ $stats              = VW_Translate_DB::get_stats();
 					<div class="vwt-style-card">
 						<div class="vwt-style-preview">
 							<div class="vwt-prev-pills">
-								<span class="act">&#127482;&#127480; EN</span>
-								<span>&#127477;&#127473; PL</span>
+							<span class="act"><img src="https://flagcdn.com/w20/us.png" width="18" height="13" style="border-radius:2px;vertical-align:middle;margin-right:3px;"> EN</span>
+							<span><img src="https://flagcdn.com/w20/pl.png" width="18" height="13" style="border-radius:2px;vertical-align:middle;margin-right:3px;"> PL</span>
 							</div>
 						</div>
 						<span class="vwt-style-label-text"><?php esc_html_e( 'Pills', 'vw-translate' ); ?></span>
@@ -195,9 +195,9 @@ $stats              = VW_Translate_DB::get_stats();
 					<div class="vwt-style-card">
 						<div class="vwt-style-preview">
 							<div class="vwt-prev-minimal">
-								<span class="act">&#127482;&#127480; EN</span>
-								<span class="sep"></span>
-								<span>&#127477;&#127473; PL</span>
+							<span class="act"><img src="https://flagcdn.com/w20/us.png" width="18" height="13" style="border-radius:2px;vertical-align:middle;margin-right:3px;"> EN</span>
+							<span class="sep"></span>
+							<span><img src="https://flagcdn.com/w20/pl.png" width="18" height="13" style="border-radius:2px;vertical-align:middle;margin-right:3px;"> PL</span>
 							</div>
 						</div>
 						<span class="vwt-style-label-text"><?php esc_html_e( 'Minimal', 'vw-translate' ); ?></span>
@@ -210,8 +210,8 @@ $stats              = VW_Translate_DB::get_stats();
 					<div class="vwt-style-card">
 						<div class="vwt-style-preview">
 							<div class="vwt-prev-cards">
-								<span class="act">&#127482;&#127480;<em>EN</em></span>
-								<span>&#127477;&#127473;<em>PL</em></span>
+							<span class="act"><img src="https://flagcdn.com/w20/us.png" width="20" height="15" style="border-radius:3px;vertical-align:middle;"><em>EN</em></span>
+							<span><img src="https://flagcdn.com/w20/pl.png" width="20" height="15" style="border-radius:3px;vertical-align:middle;"><em>PL</em></span>
 							</div>
 						</div>
 						<span class="vwt-style-label-text"><?php esc_html_e( 'Cards', 'vw-translate' ); ?></span>
@@ -223,7 +223,7 @@ $stats              = VW_Translate_DB::get_stats();
 					<input type="radio" name="shortcode_style" value="elegant" <?php checked( $shortcode_style, 'elegant' ); ?>>
 					<div class="vwt-style-card">
 						<div class="vwt-style-preview">
-							<div class="vwt-prev-elegant">&#127760; English</div>
+						<div class="vwt-prev-elegant"><img src="https://flagcdn.com/w20/us.png" width="18" height="13" style="border-radius:2px;vertical-align:middle;margin-right:4px;"> English</div>
 						</div>
 						<span class="vwt-style-label-text"><?php esc_html_e( 'Elegant', 'vw-translate' ); ?></span>
 					</div>

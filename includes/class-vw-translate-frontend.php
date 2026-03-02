@@ -501,10 +501,6 @@ class VW_Translate_Frontend {
 	 */
 	public function enqueue_frontend_assets() {
 
-		if ( ! get_option( 'vw_translate_enable_switcher', 1 ) ) {
-			return;
-		}
-
 		wp_enqueue_style(
 			'vw-translate-frontend',
 			VW_TRANSLATE_PLUGIN_URL . 'admin/css/vw-translate-frontend.css',
@@ -526,7 +522,8 @@ class VW_Translate_Frontend {
 
 		$position = get_option( 'vw_translate_switcher_position', 'bottom-right' );
 
-		echo wp_kses_post( self::get_language_switcher( 'floating', $position ) );
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo self::get_language_switcher( 'floating', $position );
 	}
 
 	/**
@@ -989,6 +986,9 @@ class VW_Translate_Frontend {
 			}
 		})();
 		</script>
+		<?php
+	}
+
 	/**
 	 * Render flag+code style switcher (flag image + uppercase language code).
 	 *
