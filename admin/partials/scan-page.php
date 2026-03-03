@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Admin scan page — Professional Design.
  *
@@ -136,6 +136,16 @@ $stats          = VW_Translate_DB::get_stats();
 		</div>
 	</div>
 
+	<!-- Start Scan -->
+	<div class="vwt-scan-trigger">
+		<button type="button" class="vwt-btn vwt-btn-primary vwt-btn-lg" id="vw-translate-scan-btn"
+				data-label="<?php esc_attr_e( 'Start Scan', 'vw-translate' ); ?>">
+			<span class="dashicons dashicons-search"></span>
+			<?php esc_html_e( 'Start Scan', 'vw-translate' ); ?>
+		</button>
+		<p class="scan-help"><?php esc_html_e( 'Scanning may take a moment depending on the number of pages and files.', 'vw-translate' ); ?></p>
+	</div>
+
 	<!-- Environment Info Card -->
 	<div class="vwt-card">
 		<div class="vwt-card-header">
@@ -167,16 +177,6 @@ $stats          = VW_Translate_DB::get_stats();
 						<?php endforeach; ?>
 					</ul>
 				</div>
-			</div>
-		</div>
-		<div class="vwt-card-footer">
-			<div class="vwt-scan-trigger">
-				<button type="button" class="vwt-btn vwt-btn-primary vwt-btn-lg" id="vw-translate-scan-btn"
-						data-label="<?php esc_attr_e( 'Start Scan', 'vw-translate' ); ?>">
-					<span class="dashicons dashicons-search"></span>
-					<?php esc_html_e( 'Start Scan', 'vw-translate' ); ?>
-				</button>
-				<p class="scan-help"><?php esc_html_e( 'Scanning may take a moment depending on the number of pages and files.', 'vw-translate' ); ?></p>
 			</div>
 		</div>
 	</div>
