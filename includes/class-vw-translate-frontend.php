@@ -495,6 +495,48 @@ class VW_Translate_Frontend {
 	}
 
 	/**
+	 * Attempt to read the active theme's primary colour from multiple sources.
+	 *
+	 * Resolution order:
+	 *  1. WordPress theme.json colour palette (slug: primary, accent, foreground)
+	 *  2. Common Customizer theme-mod keys
+	 *  3. Empty string — JS fallback takes over
+	 *
+	 * @since 1.3.0
+	 * @return string Hex colour string or empty string.
+	 */
+	public static function get_site_primary_color() {
+
+		// 1. theme.json (block / hybrid themes — WordPress 5.8+).
+		if ( function_exists( 'wp_get_global_settings' ) ) {
+			$settings = wp_get_global_settings();
+			$palette  = ! empty( $settings['color']['palette']['theme'] ) ? $settings['color']['palette']['theme'] : array();
+			$priority = array( 'primary', 'accent', 'foreground', 'vivid-cyan-blue' );
+			foreach ( $priority as $slug ) {
+				foreach ( $palette as $color ) {
+					if ( strtolower( $color['slug'] ) === $slug && ! empty( $color['color'] ) ) {
+						return sanitize_hex_color( $color['color'] );
+					}
+				}
+			}
+			// Fall back to first theme colour.
+			if ( ! empty( $palette[0]['color'] ) ) {
+				return sanitize_hex_color( $palette[0]['color'] );
+			}
+		}
+
+		// 2. Common Customizer theme-mod keys.
+		foreach ( array( 'primary_color', 'accent_color', 'button_color', 'link_color', 'theme_color' ) as $key ) {
+			$val = get_theme_mod( $key, '' );
+			if ( ! empty( $val ) ) {
+				return sanitize_hex_color( $val );
+			}
+		}
+
+		return '';
+	}
+
+	/**
 	 * Enqueue frontend assets.
 	 *
 	 * @since 1.0.0
@@ -506,6 +548,37 @@ class VW_Translate_Frontend {
 			VW_TRANSLATE_PLUGIN_URL . 'admin/css/vw-translate-frontend.css',
 			array(),
 			VW_TRANSLATE_VERSION
+		);
+
+		// Inline CSS: override --vwt-primary when PHP can detect the theme's primary colour.
+		$primary = self::get_site_primary_color();
+		if ( $primary ) {
+			wp_add_inline_style(
+				'vw-translate-frontend',
+				':root { --vwt-primary: ' . esc_attr( $primary ) . '; }'
+			);
+		}
+
+		// Inline JS fallback: detect primary colour from common CSS custom properties
+		// (covers themes that expose variables but not customizer/theme.json values).
+		wp_register_script( 'vw-translate-color-detect', false, array(), VW_TRANSLATE_VERSION, array( 'in_footer' => false ) );
+		wp_enqueue_script( 'vw-translate-color-detect' );
+		wp_add_inline_script(
+			'vw-translate-color-detect',
+			'(function(){
+				var cs=getComputedStyle(document.documentElement);
+				var p=(
+					cs.getPropertyValue("--wp--preset--color--primary").trim()||
+					cs.getPropertyValue("--color-primary").trim()||
+					cs.getPropertyValue("--primary-color").trim()||
+					cs.getPropertyValue("--primary").trim()||
+					cs.getPropertyValue("--accent-color").trim()||
+					cs.getPropertyValue("--color-accent").trim()||
+					cs.getPropertyValue("--theme-color").trim()||
+					cs.getPropertyValue("--wp--preset--color--vivid-cyan-blue").trim()
+				);
+				if(p){document.documentElement.style.setProperty("--vwt-primary",p);}
+			})();'
 		);
 	}
 
