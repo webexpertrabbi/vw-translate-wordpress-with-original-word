@@ -669,7 +669,18 @@ class VW_Translate_Frontend {
 				break;
 		}
 
-		return ob_get_clean();
+		$html = ob_get_clean();
+
+		// Apply size modifier class (skip for floating — it has its own fixed styling).
+		if ( 'floating' !== $style && ! empty( $html ) ) {
+			$size_opt = get_option( 'vw_translate_size_' . str_replace( '-', '_', $style ), 'md' );
+			if ( 'md' !== $size_opt ) {
+				// Prepend vwt-size-{sm|lg} to the first class attribute in the output.
+				$html = preg_replace( '/class="/', 'class="vwt-size-' . esc_attr( $size_opt ) . ' ', $html, 1 );
+			}
+		}
+
+		return $html;
 	}
 
 	/**

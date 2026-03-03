@@ -91,6 +91,9 @@
 				}
 			});
 
+			// Size picker buttons.
+			$(document).on('click', '.vwt-sz-btn', this.handleSizePicker);
+
 			// Search strings.
 			$(document).on('click', '#vw-translate-search-btn', this.searchStrings);
 			$(document).on('keypress', '#vw-translate-search-input', function (e) {
@@ -692,7 +695,14 @@
 				exclude_admin: $wrap.find('#vw-translate-exclude-admin').is(':checked') ? 1 : 0,
 				cache_translations: $wrap.find('#vw-translate-cache-translations').is(':checked') ? 1 : 0,
 				cache_duration: $wrap.find('#vw-translate-cache-duration').val(),
-				shortcode_style: $wrap.find('input[name="shortcode_style"]:checked').val() || 'dropdown'
+				shortcode_style : $wrap.find('input[name="shortcode_style"]:checked').val() || 'dropdown',
+				size_dropdown   : $wrap.find('input[name="size_dropdown"]').val()   || 'md',
+				size_pills      : $wrap.find('input[name="size_pills"]').val()      || 'md',
+				size_minimal    : $wrap.find('input[name="size_minimal"]').val()    || 'md',
+				size_cards      : $wrap.find('input[name="size_cards"]').val()      || 'md',
+				size_elegant    : $wrap.find('input[name="size_elegant"]').val()    || 'md',
+				size_flag_code  : $wrap.find('input[name="size_flag_code"]').val()  || 'md',
+				size_flag_only  : $wrap.find('input[name="size_flag_only"]').val()  || 'md'
 			};
 
 			$.ajax({
@@ -752,6 +762,23 @@
 					$btn.prop('disabled', false).html('<span class="dashicons dashicons-trash"></span> Clear Translation Cache');
 				}
 			});
+		},
+
+		/**
+		 * Handle size picker (S/M/L) button click inside a style card.
+		 *
+		 * Stops event bubbling so the outer style-selector label is not toggled
+		 * when the user only wants to change the size of a non-active style.
+		 *
+		 * @param {Event} e Click event.
+		 */
+		handleSizePicker: function (e) {
+			e.stopPropagation();
+			var $btn    = $(this);
+			var $picker = $btn.closest('.vwt-size-picker');
+			$picker.find('.vwt-sz-btn').removeClass('active');
+			$btn.addClass('active');
+			$picker.find('input[type="hidden"]').val($btn.data('size'));
 		},
 
 		/**

@@ -524,6 +524,13 @@ class VW_Translate_Admin {
 			'enable_switcher'    => isset( $_POST['enable_switcher'] ) ? absint( $_POST['enable_switcher'] ) : 0,
 			'switcher_position'  => isset( $_POST['switcher_position'] ) ? sanitize_text_field( wp_unslash( $_POST['switcher_position'] ) ) : 'bottom-right',
 			'shortcode_style'    => isset( $_POST['shortcode_style'] ) ? sanitize_text_field( wp_unslash( $_POST['shortcode_style'] ) ) : 'dropdown',
+			'size_dropdown'      => isset( $_POST['size_dropdown'] )  ? sanitize_text_field( wp_unslash( $_POST['size_dropdown'] ) )  : 'md',
+			'size_pills'         => isset( $_POST['size_pills'] )     ? sanitize_text_field( wp_unslash( $_POST['size_pills'] ) )     : 'md',
+			'size_minimal'       => isset( $_POST['size_minimal'] )   ? sanitize_text_field( wp_unslash( $_POST['size_minimal'] ) )   : 'md',
+			'size_cards'         => isset( $_POST['size_cards'] )     ? sanitize_text_field( wp_unslash( $_POST['size_cards'] ) )     : 'md',
+			'size_elegant'       => isset( $_POST['size_elegant'] )   ? sanitize_text_field( wp_unslash( $_POST['size_elegant'] ) )   : 'md',
+			'size_flag_code'     => isset( $_POST['size_flag_code'] ) ? sanitize_text_field( wp_unslash( $_POST['size_flag_code'] ) ) : 'md',
+			'size_flag_only'     => isset( $_POST['size_flag_only'] ) ? sanitize_text_field( wp_unslash( $_POST['size_flag_only'] ) ) : 'md',
 			'scan_depth'         => isset( $_POST['scan_depth'] ) ? absint( $_POST['scan_depth'] ) : 5,
 			'exclude_admin'      => isset( $_POST['exclude_admin'] ) ? absint( $_POST['exclude_admin'] ) : 1,
 			'cache_translations' => isset( $_POST['cache_translations'] ) ? absint( $_POST['cache_translations'] ) : 1,
@@ -540,6 +547,14 @@ class VW_Translate_Admin {
 		$allowed_styles = array( 'dropdown', 'pills', 'minimal', 'cards', 'elegant', 'flag-code', 'flag-only' );
 		if ( ! in_array( $settings['shortcode_style'], $allowed_styles, true ) ) {
 			$settings['shortcode_style'] = 'dropdown';
+		}
+
+		// Validate per-style sizes.
+		$allowed_sizes = array( 'sm', 'md', 'lg' );
+		foreach ( array( 'size_dropdown', 'size_pills', 'size_minimal', 'size_cards', 'size_elegant', 'size_flag_code', 'size_flag_only' ) as $size_key ) {
+			if ( ! in_array( $settings[ $size_key ], $allowed_sizes, true ) ) {
+				$settings[ $size_key ] = 'md';
+			}
 		}
 
 		// Validate scan depth (1-10).

@@ -353,3 +353,55 @@ height: 26px;
 border-radius: 4px;
 box-shadow: 0 1px 4px rgba(0,0,0,.22);
 }
+
+/* ═══════════════════════════════════════════════════════════
+   SIZE MODIFIERS  (.vwt-size-sm / .vwt-size-lg)
+═══════════════════════════════════════════════════════════ */
+
+/* ─── Small ───────────────────────────────────────────────── */
+.vwt-size-sm.vwt-style-dropdown select { font-size: 12px; padding: 5px 28px 5px 9px; min-width: 110px; }
+
+.vwt-size-sm.vwt-style-pills { gap: 4px; padding: 3px; }
+.vwt-size-sm.vwt-style-pills a { padding: 4px 10px; font-size: 11px; gap: 4px; }
+.vwt-size-sm.vwt-style-pills .vwt-flag-img { width: 16px; height: 12px; }
+
+.vwt-size-sm.vwt-style-minimal a { padding: 2px 7px; font-size: 11px; }
+.vwt-size-sm.vwt-style-minimal .vwt-flag-img { width: 16px; height: 12px; }
+
+.vwt-size-sm.vwt-style-cards a { padding: 8px 10px; min-width: 58px; }
+.vwt-size-sm.vwt-style-cards .vwt-flag-img { width: 22px; height: 17px; }
+.vwt-size-sm.vwt-style-cards .vwt-name { font-size: 9px; }
+
+.vwt-size-sm .vwt-elegant-toggle { padding: 6px 10px; font-size: 12px; min-width: 100px; gap: 6px; }
+.vwt-size-sm .vwt-elegant-toggle .vwt-flag-img { width: 16px; height: 12px; }
+.vwt-size-sm .vwt-elegant-item { padding: 7px 12px; font-size: 12px; }
+.vwt-size-sm .vwt-elegant-item .vwt-flag-img { width: 16px; height: 12px; }
+
+.vwt-size-sm.vwt-style-flag-code a { padding: 4px 8px; font-size: 11px; gap: 4px; }
+.vwt-size-sm.vwt-style-flag-code .vwt-flag-img { width: 18px; height: 14px; }
+
+.vwt-size-sm.vwt-style-flag-only .vwt-flag-img { width: 24px; height: 18px; }
+
+/* ─── Large ───────────────────────────────────────────────── */
+.vwt-size-lg.vwt-style-dropdown select { font-size: 16px; padding: 11px 44px 11px 16px; min-width: 170px; }
+
+.vwt-size-lg.vwt-style-pills { gap: 10px; padding: 5px; }
+.vwt-size-lg.vwt-style-pills a { padding: 9px 20px; font-size: 15px; gap: 8px; }
+.vwt-size-lg.vwt-style-pills .vwt-flag-img { width: 28px; height: 21px; }
+
+.vwt-size-lg.vwt-style-minimal a { padding: 6px 14px; font-size: 15px; }
+.vwt-size-lg.vwt-style-minimal .vwt-flag-img { width: 28px; height: 21px; }
+
+.vwt-size-lg.vwt-style-cards a { padding: 16px 20px; min-width: 96px; }
+.vwt-size-lg.vwt-style-cards .vwt-flag-img { width: 40px; height: 30px; }
+.vwt-size-lg.vwt-style-cards .vwt-name { font-size: 13px; }
+
+.vwt-size-lg .vwt-elegant-toggle { padding: 12px 20px; font-size: 16px; min-width: 160px; gap: 10px; }
+.vwt-size-lg .vwt-elegant-toggle .vwt-flag-img { width: 26px; height: 19px; }
+.vwt-size-lg .vwt-elegant-item { padding: 12px 18px; font-size: 15px; gap: 12px; }
+.vwt-size-lg .vwt-elegant-item .vwt-flag-img { width: 26px; height: 19px; }
+
+.vwt-size-lg.vwt-style-flag-code a { padding: 9px 18px; font-size: 14px; gap: 8px; }
+.vwt-size-lg.vwt-style-flag-code .vwt-flag-img { width: 30px; height: 22px; }
+
+.vwt-size-lg.vwt-style-flag-only .vwt-flag-img { width: 46px; height: 34px; }

@@ -22,6 +22,15 @@ $exclude_admin      = (bool) get_option( 'vw_translate_exclude_admin',      1 );
 $cache_translations = (bool) get_option( 'vw_translate_cache_translations', 1 );
 $cache_duration     = (int)  get_option( 'vw_translate_cache_duration',     12 );
 $shortcode_style    =        get_option( 'vw_translate_shortcode_style',    'dropdown' );
+$style_sizes        = array(
+	'dropdown' => get_option( 'vw_translate_size_dropdown', 'md' ),
+	'pills'    => get_option( 'vw_translate_size_pills',    'md' ),
+	'minimal'  => get_option( 'vw_translate_size_minimal',  'md' ),
+	'cards'    => get_option( 'vw_translate_size_cards',    'md' ),
+	'elegant'  => get_option( 'vw_translate_size_elegant',  'md' ),
+	'flag_code' => get_option( 'vw_translate_size_flag_code', 'md' ),
+	'flag_only' => get_option( 'vw_translate_size_flag_only', 'md' ),
+);
 $stats              = VW_Translate_DB::get_stats();
 ?>
 
@@ -172,6 +181,12 @@ $stats              = VW_Translate_DB::get_stats();
 						<div class="vwt-prev-dropdown"><img src="https://flagcdn.com/w20/us.png" width="18" height="13" style="border-radius:2px;vertical-align:middle;margin-right:4px;"> English</div>
 						</div>
 						<span class="vwt-style-label-text"><?php esc_html_e( 'Dropdown', 'vw-translate' ); ?></span>
+					<div class="vwt-size-picker" data-style="dropdown">
+						<span class="vwt-sz-btn<?php echo 'sm' === $style_sizes['dropdown'] ? ' active' : ''; ?>" data-size="sm">S</span>
+						<span class="vwt-sz-btn<?php echo 'md' === $style_sizes['dropdown'] ? ' active' : ''; ?>" data-size="md">M</span>
+						<span class="vwt-sz-btn<?php echo 'lg' === $style_sizes['dropdown'] ? ' active' : ''; ?>" data-size="lg">L</span>
+						<input type="hidden" name="size_dropdown" value="<?php echo esc_attr( $style_sizes['dropdown'] ); ?>">
+					</div>
 					</div>
 				</label>
 
@@ -186,6 +201,12 @@ $stats              = VW_Translate_DB::get_stats();
 							</div>
 						</div>
 						<span class="vwt-style-label-text"><?php esc_html_e( 'Pills', 'vw-translate' ); ?></span>
+					<div class="vwt-size-picker" data-style="pills">
+						<span class="vwt-sz-btn<?php echo 'sm' === $style_sizes['pills'] ? ' active' : ''; ?>" data-size="sm">S</span>
+						<span class="vwt-sz-btn<?php echo 'md' === $style_sizes['pills'] ? ' active' : ''; ?>" data-size="md">M</span>
+						<span class="vwt-sz-btn<?php echo 'lg' === $style_sizes['pills'] ? ' active' : ''; ?>" data-size="lg">L</span>
+						<input type="hidden" name="size_pills" value="<?php echo esc_attr( $style_sizes['pills'] ); ?>">
+					</div>
 					</div>
 				</label>
 
@@ -201,6 +222,12 @@ $stats              = VW_Translate_DB::get_stats();
 							</div>
 						</div>
 						<span class="vwt-style-label-text"><?php esc_html_e( 'Minimal', 'vw-translate' ); ?></span>
+					<div class="vwt-size-picker" data-style="minimal">
+						<span class="vwt-sz-btn<?php echo 'sm' === $style_sizes['minimal'] ? ' active' : ''; ?>" data-size="sm">S</span>
+						<span class="vwt-sz-btn<?php echo 'md' === $style_sizes['minimal'] ? ' active' : ''; ?>" data-size="md">M</span>
+						<span class="vwt-sz-btn<?php echo 'lg' === $style_sizes['minimal'] ? ' active' : ''; ?>" data-size="lg">L</span>
+						<input type="hidden" name="size_minimal" value="<?php echo esc_attr( $style_sizes['minimal'] ); ?>">
+					</div>
 					</div>
 				</label>
 
@@ -215,6 +242,12 @@ $stats              = VW_Translate_DB::get_stats();
 							</div>
 						</div>
 						<span class="vwt-style-label-text"><?php esc_html_e( 'Cards', 'vw-translate' ); ?></span>
+					<div class="vwt-size-picker" data-style="cards">
+						<span class="vwt-sz-btn<?php echo 'sm' === $style_sizes['cards'] ? ' active' : ''; ?>" data-size="sm">S</span>
+						<span class="vwt-sz-btn<?php echo 'md' === $style_sizes['cards'] ? ' active' : ''; ?>" data-size="md">M</span>
+						<span class="vwt-sz-btn<?php echo 'lg' === $style_sizes['cards'] ? ' active' : ''; ?>" data-size="lg">L</span>
+						<input type="hidden" name="size_cards" value="<?php echo esc_attr( $style_sizes['cards'] ); ?>">
+					</div>
 					</div>
 				</label>
 
@@ -226,6 +259,12 @@ $stats              = VW_Translate_DB::get_stats();
 						<div class="vwt-prev-elegant"><img src="https://flagcdn.com/w20/us.png" width="18" height="13" style="border-radius:2px;vertical-align:middle;margin-right:4px;"> English</div>
 						</div>
 						<span class="vwt-style-label-text"><?php esc_html_e( 'Elegant', 'vw-translate' ); ?></span>
+					<div class="vwt-size-picker" data-style="elegant">
+						<span class="vwt-sz-btn<?php echo 'sm' === $style_sizes['elegant'] ? ' active' : ''; ?>" data-size="sm">S</span>
+						<span class="vwt-sz-btn<?php echo 'md' === $style_sizes['elegant'] ? ' active' : ''; ?>" data-size="md">M</span>
+						<span class="vwt-sz-btn<?php echo 'lg' === $style_sizes['elegant'] ? ' active' : ''; ?>" data-size="lg">L</span>
+						<input type="hidden" name="size_elegant" value="<?php echo esc_attr( $style_sizes['elegant'] ); ?>">
+					</div>
 					</div>
 				</label>
 
@@ -240,6 +279,12 @@ $stats              = VW_Translate_DB::get_stats();
 							</div>
 						</div>
 						<span class="vwt-style-label-text"><?php esc_html_e( 'Flag + Code', 'vw-translate' ); ?></span>
+					<div class="vwt-size-picker" data-style="flag-code">
+						<span class="vwt-sz-btn<?php echo 'sm' === $style_sizes['flag_code'] ? ' active' : ''; ?>" data-size="sm">S</span>
+						<span class="vwt-sz-btn<?php echo 'md' === $style_sizes['flag_code'] ? ' active' : ''; ?>" data-size="md">M</span>
+						<span class="vwt-sz-btn<?php echo 'lg' === $style_sizes['flag_code'] ? ' active' : ''; ?>" data-size="lg">L</span>
+						<input type="hidden" name="size_flag_code" value="<?php echo esc_attr( $style_sizes['flag_code'] ); ?>">
+					</div>
 					</div>
 				</label>
 
@@ -254,6 +299,12 @@ $stats              = VW_Translate_DB::get_stats();
 							</div>
 						</div>
 						<span class="vwt-style-label-text"><?php esc_html_e( 'Flag Only', 'vw-translate' ); ?></span>
+					<div class="vwt-size-picker" data-style="flag-only">
+						<span class="vwt-sz-btn<?php echo 'sm' === $style_sizes['flag_only'] ? ' active' : ''; ?>" data-size="sm">S</span>
+						<span class="vwt-sz-btn<?php echo 'md' === $style_sizes['flag_only'] ? ' active' : ''; ?>" data-size="md">M</span>
+						<span class="vwt-sz-btn<?php echo 'lg' === $style_sizes['flag_only'] ? ' active' : ''; ?>" data-size="lg">L</span>
+						<input type="hidden" name="size_flag_only" value="<?php echo esc_attr( $style_sizes['flag_only'] ); ?>">
+					</div>
 					</div>
 				</label>
 
